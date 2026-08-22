@@ -8,6 +8,6 @@ RUN npm run build --workspace=@gym/web
 
 FROM nginx:alpine
 COPY --from=builder /repo/apps/web/dist /usr/share/nginx/html
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY apps/web/nginx.conf.template /etc/nginx/templates/default.conf.template
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

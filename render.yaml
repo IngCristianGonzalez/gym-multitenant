@@ -1,0 +1,7 @@
+services:
+  # ── PostgreSQL ───────────────────────────────────────────────
+  - type: postgresql
+    name: gym-db
+    plan: free
+    databaseName: gym_central
+    user: gym
