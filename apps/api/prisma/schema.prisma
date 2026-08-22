@@ -1,0 +1,386 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  super_admin
+  admin
+  recepcionista
+}
+
+enum TipoId {
+  CC
+  CE
+  TI
+  PP
+  NIT
+}
+
+enum EstadoMiembro {
+  activo
+  inactivo
+  suspendido
+}
+
+enum TipoPeriodo {
+  DIA
+  SEMANA
+  MES
+  QUINCENA
+  PERSONALIZADO
+}
+
+enum MetodoPago {
+  efectivo
+  tarjeta
+  transferencia
+}
+
+enum EstadoFactura {
+  emitida
+  anulada
+  cancelada
+}
+
+enum TipoCategoria {
+  producto
+  consumible
+}
+
+enum Movimiento {
+  entrada
+  salida
+}
+
+enum TipoMaquina {
+  fuerza
+  cardio
+  accesorio
+}
+
+enum EstadoMaquina {
+  operativo
+  mantenimiento
+  fuera
+}
+
+model Empresa {
+  id                 String   @id @default(uuid()) @db.Uuid
+  nombre             String
+  nit                String   @unique
+  logoUrl            String?  @db.VarChar(255)
+  colorPrimario      String   @default("#2b8a3e") @db.VarChar(9)
+  resolucionFactura  String?  @db.VarChar(60)
+  prefijoFactura     String   @default("GYM") @db.VarChar(10)
+  facturaSecuencia   Int      @default(0)
+  config             Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  users              User[]
+  miembros           Miembro[]
+  planes             Plan[]
+  facturas           Factura[]
+  categorias         CategoriaProducto[]
+  productos          Producto[]
+  maquinas           Maquina[]
+  ejercicios         Ejercicio[]
+  frecuencias        FrecuenciaRutina[]
+  miembroRutinas     MiembroRutina[]
+  movimientos        InventarioMovimiento[]
+  configCampos       ConfigCampo[]
+  colaboradores      Colaborador[]
+
+  @@index([nit])
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  empresaId String   @db.Uuid
+  nombre    String
+  email     String
+  password  String
+  rol       Rol      @default(recepcionista)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresa   Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, email])
+  @@index([empresaId])
+}
+
+model Miembro {
+  id                 String         @id @default(uuid()) @db.Uuid
+  empresaId          String         @db.Uuid
+  identificacion     String
+  tipoIdentificacion TipoId         @default(CC)
+  primerNombre       String
+  segundoNombre      String?
+  primerApellido     String
+  segundoApellido    String?
+  fechaNacimiento    DateTime
+  sexo               String         @default("M") @db.VarChar(1)
+  celular            String         @db.VarChar(15)
+  correo             String?        @db.VarChar(120)
+  direccion          String?        @db.VarChar(255)
+  estado             EstadoMiembro  @default(activo)
+  fechaRegistro      DateTime       @default(now())
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  empresa            Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  facturas           Factura[]
+  rutinasAsignadas   MiembroRutina[]
+
+  @@unique([empresaId, identificacion])
+  @@index([empresaId, createdAt])
+}
+
+model Plan {
+  id            String   @id @default(uuid()) @db.Uuid
+  empresaId     String   @db.Uuid
+  nombre        String
+  descripcion   String?  @db.VarChar(255)
+  precio        Float
+  duracionDias  Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  empresa       Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  facturas      Factura[]
+
+  @@index([empresaId])
+}
+
+model Factura {
+  id                String        @id @default(uuid()) @db.Uuid
+  empresaId         String        @db.Uuid
+  miembroId         String        @db.Uuid
+  planId            String?       @db.Uuid
+  rutinaId          String?       @db.Uuid
+  numeroFactura     String
+  fechaEmision      DateTime      @default(now())
+  fechaVencimiento  DateTime
+  subtotal          Float
+  total             Float
+  estado            EstadoFactura @default(emitida)
+  metodoPago        MetodoPago    @default(efectivo)
+  notas             String?       @db.VarChar(255)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  empresa           Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  miembro           Miembro             @relation(fields: [miembroId], references: [id])
+  plan              Plan?               @relation(fields: [planId], references: [id])
+  rutina            FrecuenciaRutina?   @relation(fields: [rutinaId], references: [id])
+  detalles          FacturaDetalle[]
+
+  @@unique([empresaId, numeroFactura])
+  @@index([empresaId, createdAt])
+}
+
+model FacturaDetalle {
+  id              String   @id @default(uuid()) @db.Uuid
+  facturaId       String   @db.Uuid
+  productoId      String?  @db.Uuid
+  concepto        String
+  cantidad        Float
+  precioUnitario  Float
+  subtotal        Float
+  createdAt       DateTime @default(now())
+
+  factura         Factura  @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+  producto       Producto? @relation(fields: [productoId], references: [id], onDelete: SetNull)
+
+  @@index([facturaId])
+}
+
+model CategoriaProducto {
+  id        String        @id @default(uuid()) @db.Uuid
+  empresaId String        @db.Uuid
+  nombre    String
+  tipo      TipoCategoria @default(producto)
+  createdAt DateTime      @default(now())
+
+  empresa   Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  productos Producto[]
+
+  @@unique([empresaId, nombre])
+}
+
+model Producto {
+  id            String   @id @default(uuid()) @db.Uuid
+  empresaId     String   @db.Uuid
+  categoriaId   String   @db.Uuid
+  nombre        String
+  descripcion   String?  @db.VarChar(255)
+  precioVenta   Float
+  precioCompra  Float    @default(0)
+  stockActual   Int      @default(0)
+  stockMinimo   Int      @default(0)
+  unidadMedida  String   @default("unidad") @db.VarChar(20)
+  fotoUrl       String?  @db.VarChar(255)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  empresa       Empresa               @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  categoria     CategoriaProducto     @relation(fields: [categoriaId], references: [id])
+  movimientos   InventarioMovimiento[]
+  detalles      FacturaDetalle[]
+
+  @@unique([empresaId, nombre])
+  @@index([empresaId])
+}
+
+model InventarioMovimiento {
+  id              String     @id @default(uuid()) @db.Uuid
+  empresaId       String     @db.Uuid
+  productoId      String     @db.Uuid
+  tipo            Movimiento
+  cantidad        Int
+  motivo          String     @default("ajuste") @db.VarChar(60)
+  balanceAnterior Int
+  balanceNuevo    Int
+  createdAt       DateTime   @default(now())
+
+  empresa         Empresa    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  producto        Producto   @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, createdAt])
+}
+
+model Maquina {
+  id                String         @id @default(uuid()) @db.Uuid
+  empresaId         String         @db.Uuid
+  nombre            String
+  tipo              TipoMaquina    @default(fuerza)
+  marca             String?        @db.VarChar(60)
+  modelo            String?        @db.VarChar(60)
+  serial            String?        @db.VarChar(60)
+  ubicacion         String?        @db.VarChar(80)
+  fechaAdquisicion  DateTime?
+  precio            Float?
+  estado            EstadoMaquina  @default(operativo)
+  fotoUrl           String?        @db.VarChar(255)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  empresa           Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  ejercicios        Ejercicio[]
+
+  @@unique([empresaId, serial])
+  @@index([empresaId])
+}
+
+model Ejercicio {
+  id            String    @id @default(uuid()) @db.Uuid
+  empresaId     String    @db.Uuid
+  nombre        String
+  maquinaId     String?   @db.Uuid
+  categoria     String    @default("General") @db.VarChar(40)
+  descripcion   String?   @db.VarChar(500)
+  videoUrl      String?   @db.VarChar(255)
+  fotoUrl       String?   @db.VarChar(255)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  empresa       Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  maquina       Maquina?       @relation(fields: [maquinaId], references: [id], onDelete: SetNull)
+  rutinas       EjercicioRutina[]
+
+  @@index([empresaId])
+}
+
+model FrecuenciaRutina {
+  id            String       @id @default(uuid()) @db.Uuid
+  empresaId     String       @db.Uuid
+  nombre        String
+  tipoPeriodo   TipoPeriodo
+  duracionDias  Int?
+  diaSemana     Int?
+  precio        Float        @default(0)
+  descripcion   String?      @db.VarChar(500)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  ejercicios    EjercicioRutina[]
+  miembrosAsignados MiembroRutina[]
+  facturas      Factura[]
+
+  @@index([empresaId])
+}
+
+model EjercicioRutina {
+  id            String   @id @default(uuid()) @db.Uuid
+  frecuenciaId  String   @db.Uuid
+  ejercicioId   String   @db.Uuid
+  orden         Int      @default(0)
+  series        Int      @default(3)
+  repeticiones  String   @default("12") @db.VarChar(20)
+  descansoMin   Int      @default(1)
+
+  frecuencia    FrecuenciaRutina @relation(fields: [frecuenciaId], references: [id], onDelete: Cascade)
+  ejercicio     Ejercicio        @relation(fields: [ejercicioId], references: [id], onDelete: Cascade)
+
+  @@index([frecuenciaId])
+}
+
+model MiembroRutina {
+  id            String    @id @default(uuid()) @db.Uuid
+  empresaId     String    @db.Uuid
+  miembroId     String    @db.Uuid
+  frecuenciaId  String    @db.Uuid
+  fechaInicio   DateTime
+  fechaFin      DateTime?
+  colaboradorId String?   @db.Uuid
+  notas         String?   @db.VarChar(500)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  empresa       Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  miembro       Miembro        @relation(fields: [miembroId], references: [id], onDelete: Cascade)
+  frecuencia    FrecuenciaRutina @relation(fields: [frecuenciaId], references: [id], onDelete: Cascade)
+  colaborador   Colaborador?   @relation(fields: [colaboradorId], references: [id], onDelete: SetNull)
+
+  @@index([empresaId, miembroId])
+  @@index([empresaId, colaboradorId])
+}
+
+model Colaborador {
+  id             String         @id @default(uuid()) @db.Uuid
+  empresaId      String         @db.Uuid
+  nombre         String
+  identificacion String?        @db.VarChar(20)
+  celular        String?        @db.VarChar(15)
+  cargo          String         @default("entrenador") @db.VarChar(40)
+  estado         EstadoMiembro  @default(activo)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  empresa        Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  asignaciones   MiembroRutina[]
+
+  @@unique([empresaId, identificacion])
+  @@index([empresaId])
+}
+
+model ConfigCampo {
+  empresaId  String   @db.Uuid
+  entidad    String   @db.VarChar(30)
+  campo      String   @db.VarChar(60)
+  etiqueta   String?  @db.VarChar(80)
+  requerido  Boolean  @default(false)
+  visible    Boolean  @default(true)
+  orden      Int      @default(0)
+
+  empresa    Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@id([empresaId, entidad, campo])
+}

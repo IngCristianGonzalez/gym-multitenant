@@ -1,0 +1,19 @@
+{
+  "name": "Gym Multiempresa",
+  "short_name": "GymMulti",
+  "description": "Gestión multi-tenant de gimnasios: miembros, facturas, inventario, máquinas y rutinas.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
