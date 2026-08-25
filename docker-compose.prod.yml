@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gym-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-gym_central}
+      POSTGRES_USER: ${DB_USER:-gym}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-gym123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gym_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-gym} -d ${DB_NAME:-gym_central}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: gym-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${DB_USER:-gym}:${DB_PASSWORD:-gym123}@postgres:5432/${DB_NAME:-gym_central}?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - gym_network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.prod
+    container_name: gym-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+    networks:
+      - gym_network
+
+networks:
+  gym_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
