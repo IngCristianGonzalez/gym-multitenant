@@ -142,24 +142,6 @@ async function main() {
     },
   });
 
-  // Asignación demo que vence en 2 días (para el dashboard "próximos a vencer")
-  const inicioAsignacion = new Date();
-  inicioAsignacion.setDate(inicioAsignacion.getDate() - 13);
-  await prisma.miembroRutina.upsert({
-    where: { id: '55555555-5555-5555-8555-555555555555' },
-    update: {},
-    create: {
-      id: '55555555-5555-5555-8555-555555555555',
-      empresaId: empresa.id,
-      miembroId: (await prisma.miembro.findFirstOrThrow({
-        where: { empresaId: empresa.id, identificacion: '1065853708' },
-      })).id,
-      frecuenciaId: '44444444-4444-4444-8444-444444444444',
-      fechaInicio: inicioAsignacion,
-      fechaFin: new Date(new Date().setDate(new Date().getDate() + 2)),
-    },
-  });
-
   // Rutina quincenal (15 días) con precio
   await prisma.frecuenciaRutina.upsert({
     where: { id: '44444444-4444-4444-8444-444444444444' },
@@ -198,6 +180,24 @@ async function main() {
       duracionDias: 30,
       precio: 80000,
       descripcion: 'Ciclo de 30 días enfocado en hipertrofia',
+    },
+  });
+
+  // Asignación demo que vence en 2 días (para el dashboard "próximos a vencer")
+  const inicioAsignacion = new Date();
+  inicioAsignacion.setDate(inicioAsignacion.getDate() - 13);
+  await prisma.miembroRutina.upsert({
+    where: { id: '55555555-5555-5555-8555-555555555555' },
+    update: {},
+    create: {
+      id: '55555555-5555-5555-8555-555555555555',
+      empresaId: empresa.id,
+      miembroId: (await prisma.miembro.findFirstOrThrow({
+        where: { empresaId: empresa.id, identificacion: '1065853708' },
+      })).id,
+      frecuenciaId: '44444444-4444-4444-8444-444444444444',
+      fechaInicio: inicioAsignacion,
+      fechaFin: new Date(new Date().setDate(new Date().getDate() + 2)),
     },
   });
 

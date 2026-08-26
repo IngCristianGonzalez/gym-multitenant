@@ -6,6 +6,7 @@ COPY package.json package-lock.json* turbo.json tsconfig.base.json ./
 COPY packages/api-types ./packages/api-types
 COPY apps/api ./apps/api
 RUN npm install
+RUN npm run build --workspace=@gym/api-types
 RUN npx prisma generate --schema ./apps/api/prisma/schema.prisma
 RUN npm run build --workspace=@gym/api
 
