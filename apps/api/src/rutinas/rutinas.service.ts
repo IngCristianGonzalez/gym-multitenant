@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRutinaDto, AsignarRutinaDto } from '@gym/api-types';
 
@@ -44,19 +44,19 @@ export class RutinasService {
     });
     if (!rutina) throw new NotFoundException('La rutina no existe');
 
-    // Regla: un miembro solo puede tener UNA rutina activa a la vez
+    // Auto-finalizar rutina activa anterior si existe
     const activa = await this.prisma.miembroRutina.findFirst({
       where: {
         empresaId,
         miembroId: dto.miembroId,
         fechaFin: { gte: new Date() },
       },
-      include: { frecuencia: { select: { nombre: true } } },
     });
     if (activa) {
-      throw new ConflictException(
-        `El miembro ya tiene la rutina activa "${activa.frecuencia.nombre}". Debe finalizar o vencer antes de asignar otra.`,
-      );
+      await this.prisma.miembroRutina.update({
+        where: { id: activa.id },
+        data: { fechaFin: new Date() },
+      });
     }
 
     if (dto.colaboradorId) {
