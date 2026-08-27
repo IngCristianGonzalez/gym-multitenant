@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import api from '../api/client';
+import { getCachedAuth, setCachedAuth, clearCachedAuth } from '../offline/db';
+import { isOnline } from '../offline/api-client';
 
 interface User {
   id: string;
@@ -23,26 +25,63 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      api
-        .get('/auth/me')
-        .then((res) => setUser(res.data))
-        .catch(() => localStorage.removeItem('token'))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    const init = async () => {
+      // Try cached auth first (works offline)
+      const cached = await getCachedAuth();
+      if (cached?.token && cached?.user) {
+        setUser(cached.user);
+        // If online, verify token is still valid
+        if (isOnline()) {
+          try {
+            const res = await api.get('/auth/me');
+            setUser(res.data);
+            await setCachedAuth(cached.token, res.data);
+          } catch {
+            // Token invalid — but stay logged in if offline data exists
+          }
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Fallback to localStorage
+      const token = localStorage.getItem('token');
+      if (token) {
+        if (isOnline()) {
+          api
+            .get('/auth/me')
+            .then(async (res) => {
+              setUser(res.data);
+              await setCachedAuth(token, res.data);
+            })
+            .catch(() => {
+              localStorage.removeItem('token');
+            })
+            .finally(() => setLoading(false));
+        } else {
+          // Offline, no cached auth — can't verify
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    init();
   }, []);
 
   const login = async (email: string, password: string) => {
     const res = await api.post('/auth/login', { email, password });
-    localStorage.setItem('token', res.data.access_token);
-    setUser(res.data.user);
+    const { access_token, user: userData } = res.data;
+    localStorage.setItem('token', access_token);
+    await setCachedAuth(access_token, userData);
+    setUser(userData);
   };
 
-  const logout = () => {
+  const logout = async () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    await clearCachedAuth();
     setUser(null);
     window.location.href = '/login';
   };
