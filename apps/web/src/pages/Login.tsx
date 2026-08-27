@@ -18,54 +18,78 @@ export default function Login() {
       await login(email, password);
       navigate('/');
     } catch {
-      setError('Credenciales inválidas');
+      setError('Credenciales invalidas');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-bg text-content px-4">
+    <div
+      className="flex items-center justify-center min-h-screen px-4"
+      style={{ background: 'var(--bg)', color: 'var(--text)' }}
+    >
       <form
         onSubmit={submit}
-        className="card p-6 sm:p-8 w-full max-w-sm space-y-5 animate-fade-up"
+        className="w-full max-w-sm animate-fade-up"
+        style={{
+          background: 'var(--surface)',
+          borderRadius: '24px',
+          padding: '2rem 1.5rem',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
+        }}
       >
-        <div className="text-center">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-brand/10 flex items-center justify-center mb-3">
-            <i className="fa-solid fa-dumbbell text-brand text-2xl" />
+        <div className="text-center mb-6">
+          <div
+            className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-4"
+            style={{ background: 'rgba(43,138,94,0.08)' }}
+          >
+            <i className="fa-solid fa-dumbbell text-2xl" style={{ color: 'var(--brand)' }} />
           </div>
           <h1 className="text-xl font-bold">Gym Multiempresa</h1>
-          <p className="text-sm text-muted mt-1">Inicia sesión para continuar</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+            Inicia sesion para continuar
+          </p>
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-sm px-3 py-2.5 flex items-start gap-2">
+          <div
+            className="text-sm px-4 py-3 flex items-start gap-2 mb-4"
+            style={{
+              borderRadius: 'var(--radius-sm)',
+              background: 'rgba(217,74,74,0.08)',
+              color: '#d94a4a',
+              border: '1.5px solid rgba(217,74,74,0.2)',
+            }}
+          >
             <i className="fa-solid fa-circle-exclamation mt-0.5" />
             {error}
           </div>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-4 mb-5">
           <div>
-            <label className="field-label">Correo electrónico</label>
+            <label className="field-label">Correo electronico</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@gym.com"
               className="input"
+              style={{ padding: '0.75rem 1rem' }}
               required
               autoFocus
             />
           </div>
           <div>
-            <label className="field-label">Contraseña</label>
+            <label className="field-label">Contrasena</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               className="input"
+              style={{ padding: '0.75rem 1rem' }}
               required
             />
           </div>
@@ -74,20 +98,35 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="btn-hero w-full justify-center !py-3"
+          className="w-full font-semibold text-white transition-all"
+          style={{
+            padding: '0.85rem',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--text)',
+            color: 'var(--bg)',
+            fontSize: '0.9rem',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.7 : 1,
+            border: 'none',
+            fontFamily: 'inherit',
+          }}
         >
           {loading ? (
             <>
-              <i className="fa-solid fa-circle-notch fa-spin" />
+              <i className="fa-solid fa-circle-notch fa-spin mr-2" />
               Ingresando...
             </>
           ) : (
             <>
-              <i className="fa-solid fa-right-to-bracket" />
+              <i className="fa-solid fa-right-to-bracket mr-2" />
               Ingresar
             </>
           )}
         </button>
+
+        <p className="text-center text-xs mt-4" style={{ color: 'var(--text-muted)' }}>
+          Desarrollado por IngCristianGonzalez
+        </p>
       </form>
     </div>
   );

@@ -46,71 +46,84 @@ function OnlineStatus() {
 
   return (
     <div className="flex items-center gap-2">
-      {/* Service worker update banner */}
       {swUpdate && (
         <button
           onClick={handleUpdate}
-          className="text-xs bg-brand/15 text-brand px-2 py-1 rounded-lg font-semibold hover:bg-brand/25 transition-colors"
+          className="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+          style={{ background: 'rgba(43,138,94,0.08)', color: 'var(--brand)' }}
         >
           <i className="fa-solid fa-arrow-up mr-1" />
           Actualizar
         </button>
       )}
 
-      {/* Online/offline dot */}
       <button
         onClick={() => setShowDetail(!showDetail)}
-        className="relative flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
-        title={isOnline ? 'En línea' : 'Sin conexión — modo offline'}
+        className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors"
+        style={{ background: 'var(--border)' }}
+        title={isOnline ? 'En linea' : 'Sin conexion'}
       >
         <span
-          className={`w-2 h-2 rounded-full ${
-            isOnline ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
-          }`}
+          className="w-2 h-2 rounded-full"
+          style={{ background: isOnline ? '#3da06e' : '#f59e0b' }}
         />
-        <span className="hidden sm:inline text-muted">
+        <span style={{ color: 'var(--text-muted)' }}>
           {isOnline ? 'Online' : 'Offline'}
         </span>
         {pendingSync > 0 && (
-          <span className="bg-amber-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none">
+          <span
+            className="text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none"
+            style={{ background: '#f59e0b' }}
+          >
             {pendingSync}
           </span>
         )}
       </button>
 
-      {/* Detail dropdown */}
       {showDetail && (
-        <div className="absolute top-full right-2 mt-1 w-56 bg-surface border border-border rounded-xl shadow-lg p-3 z-50 animate-fade-up">
+        <div
+          className="absolute top-full right-2 mt-1 w-56 p-3 z-50 animate-fade-up"
+          style={{
+            background: 'var(--surface)',
+            border: '1.5px solid var(--border)',
+            borderRadius: 'var(--radius)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+          }}
+        >
           <div className="flex items-center gap-2 mb-2">
-            <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            <span
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ background: isOnline ? '#3da06e' : '#f59e0b' }}
+            />
             <span className="text-sm font-semibold">
-              {isOnline ? 'Conectado' : 'Sin conexión'}
+              {isOnline ? 'Conectado' : 'Sin conexion'}
             </span>
           </div>
-          <p className="text-xs text-muted mb-2">
-            Los datos se guardan localmente{!isOnline ? ' y se sincronizarán al reconectar' : ''}.
+          <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
+            Los datos se guardan localmente{!isOnline ? ' y se sincronizaran al reconectar' : ''}.
           </p>
           {pendingSync > 0 && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">
+            <p className="text-xs mb-2" style={{ color: '#f59e0b' }}>
               <i className="fa-solid fa-clock mr-1" />
-              {pendingSync} cambio{pendingSync > 1 ? 's' : ''} pendiente{pendingSync > 1 ? 's' : ''} de sincronizar
+              {pendingSync} cambio{pendingSync > 1 ? 's' : ''} pendiente{pendingSync > 1 ? 's' : ''}
             </p>
           )}
           {syncing && (
-            <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
+            <p className="text-xs mb-2" style={{ color: '#60a5fa' }}>
               <i className="fa-solid fa-sync fa-spin mr-1" />
               Sincronizando...
             </p>
           )}
           {lastSyncAt && (
-            <p className="text-xs text-muted mb-2">
-              Última sync: {new Date(lastSyncAt).toLocaleTimeString()}
+            <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
+              Ultima sync: {new Date(lastSyncAt).toLocaleTimeString()}
             </p>
           )}
           {isOnline && pendingSync > 0 && !syncing && (
             <button
               onClick={() => { syncNow(); setShowDetail(false); }}
-              className="w-full text-xs bg-brand text-white py-1.5 rounded-lg font-semibold hover:bg-brand-strong transition-colors"
+              className="w-full text-xs font-semibold py-2 rounded-xl transition-colors"
+              style={{ background: 'var(--text)', color: 'var(--bg)' }}
             >
               <i className="fa-solid fa-sync mr-1" />
               Sincronizar ahora
@@ -136,17 +149,28 @@ function SidebarContent({
   const { canInstall, install } = usePwaInstall();
 
   return (
-    <div className="flex flex-col h-full bg-neutral-900 text-white">
+    <div
+      className="flex flex-col h-full"
+      style={{ background: '#1a1a1a', color: '#ddd' }}
+    >
+      {/* Brand */}
       <div
-        className={`p-4 border-b border-neutral-700 flex items-center gap-2 ${
-          collapsed ? 'justify-center' : ''
-        }`}
+        className={`px-4 py-5 flex items-center gap-3 ${collapsed ? 'justify-center px-2' : ''}`}
+        style={{ borderBottom: '1px solid #2a2a2a' }}
       >
-        <i className="fa-solid fa-dumbbell text-brand" />
-        {!collapsed && <span className="text-xl font-bold">Gym Multiempresa</span>}
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: 'var(--brand)' }}
+        >
+          <i className="fa-solid fa-dumbbell text-white text-sm" />
+        </div>
+        {!collapsed && (
+          <span className="text-lg font-bold tracking-tight">Gym Multiempresa</span>
+        )}
       </div>
 
-      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+      {/* Nav */}
+      <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const active =
             item.to === '/'
@@ -158,49 +182,75 @@ function SidebarContent({
               to={item.to}
               onClick={onNavigate}
               title={collapsed ? item.label : undefined}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                active
-                  ? 'bg-brand/20 text-white font-semibold'
-                  : 'text-neutral-300 hover:bg-neutral-700 hover:text-white'
-              } ${collapsed ? 'justify-center' : ''}`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 ${
+                collapsed ? 'justify-center' : ''
+              }`}
+              style={{
+                background: active ? 'rgba(61,160,110,0.15)' : 'transparent',
+                color: active ? '#3da06e' : '#999',
+                fontWeight: active ? 600 : 400,
+              }}
             >
-              <i className={`fa-solid ${item.icon} w-5 text-center ${active ? 'text-brand' : ''}`} />
-              {!collapsed && <span>{item.label}</span>}
+              <i
+                className={`fa-solid ${item.icon} w-5 text-center text-sm`}
+                style={{ color: active ? '#3da06e' : undefined }}
+              />
+              {!collapsed && <span className="text-sm">{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
+      {/* User section */}
       {!collapsed && (
-        <div className="p-3 border-t border-neutral-700 text-sm">
-          <p className="font-semibold">{user?.nombre}</p>
-          <p className="text-neutral-400">{user?.email}</p>
-          {canInstall && (
-            <button
-              onClick={install}
-              className="mt-2 w-full text-left text-emerald-400 hover:text-emerald-300 flex items-center gap-2"
+        <div
+          className="p-3 text-sm"
+          style={{ borderTop: '1px solid #2a2a2a' }}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+              style={{ background: 'rgba(61,160,110,0.15)', color: '#3da06e' }}
             >
-              <i className="fa-solid fa-download" />
-              Instalar app
+              {user?.nombre?.charAt(0)?.toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-white truncate text-sm">{user?.nombre}</p>
+              <p className="text-xs truncate" style={{ color: '#666' }}>{user?.email}</p>
+            </div>
+          </div>
+
+          <div className="space-y-0.5 mt-3">
+            {canInstall && (
+              <button
+                onClick={install}
+                className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
+                style={{ color: '#3da06e' }}
+              >
+                <i className="fa-solid fa-download text-xs" />
+                Instalar app
+              </button>
+            )}
+            <button
+              onClick={toggle}
+              className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
+              style={{ color: '#999' }}
+            >
+              <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'} text-xs`} />
+              {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
             </button>
-          )}
-          <button
-            onClick={toggle}
-            className="mt-2 w-full text-left text-neutral-300 hover:text-white flex items-center gap-2"
-          >
-            <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`} />
-            {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-          </button>
-          <button
-            onClick={() => {
-              logout();
-              navigate('/login');
-            }}
-            className="mt-2 w-full text-left text-red-400 hover:text-red-300 flex items-center gap-2"
-          >
-            <i className="fa-solid fa-right-from-bracket" />
-            Cerrar sesión
-          </button>
+            <button
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
+              className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
+              style={{ color: '#e05555' }}
+            >
+              <i className="fa-solid fa-right-from-bracket text-xs" />
+              Cerrar sesion
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -218,42 +268,57 @@ export default function Layout() {
   }, [collapsed]);
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar fijo en escritorio */}
+    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg)' }}>
+      {/* Desktop sidebar */}
       <aside
-        className={`hidden md:flex flex-col shrink-0 border-r border-border transition-all duration-200 ${
-          collapsed ? 'w-16' : 'w-60'
-        }`}
+        className="hidden md:flex flex-col shrink-0 transition-all duration-200"
+        style={{
+          borderRight: '1px solid var(--border)',
+          width: collapsed ? 64 : 240,
+        }}
       >
         <SidebarContent collapsed={collapsed} />
       </aside>
 
-      {/* Drawer móvil */}
+      {/* Mobile drawer */}
       <div className={`md:hidden fixed inset-0 z-40 ${mobileOpen ? '' : 'pointer-events-none'}`}>
         <div
-          className={`absolute inset-0 bg-black/50 transition-opacity duration-200 ${
-            mobileOpen ? 'opacity-100' : 'opacity-0'
-          }`}
+          className="absolute inset-0 transition-opacity duration-200"
+          style={{
+            background: 'rgba(0,0,0,0.5)',
+            opacity: mobileOpen ? 1 : 0,
+          }}
           onClick={() => setMobileOpen(false)}
         />
         <aside
-          className={`absolute inset-y-0 left-0 w-60 shadow-xl transform transition-transform duration-200 ${
-            mobileOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+          className="absolute inset-y-0 left-0 w-64 transition-transform duration-200"
+          style={{
+            boxShadow: '0 4px 32px rgba(0,0,0,0.2)',
+            transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
+          }}
         >
           <SidebarContent collapsed={false} onNavigate={() => setMobileOpen(false)} />
         </aside>
       </div>
 
-      {/* Contenido */}
+      {/* Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="flex items-center justify-between gap-3 px-3 py-2 border-b border-border bg-surface">
+        {/* Topbar */}
+        <header
+          className="flex items-center justify-between gap-3 px-4 py-3"
+          style={{
+            borderBottom: '1px solid var(--border)',
+            background: 'var(--nav-bg)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+          }}
+        >
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
-              className="md:hidden text-content p-2 -ml-2"
-              aria-label="Abrir menú"
+              className="md:hidden p-2 -ml-2 rounded-xl transition-colors"
+              style={{ color: 'var(--text)' }}
+              aria-label="Abrir menu"
             >
               <i className="fa-solid fa-bars" />
             </button>
@@ -264,18 +329,26 @@ export default function Layout() {
           </div>
         </header>
 
-        {/* Botón colapsar en escritorio */}
+        {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed((c) => !c)}
-          className="hidden md:flex items-center gap-2 px-4 py-2 text-muted hover:text-content border-b border-border bg-surface"
-          aria-label="Colapsar menú"
+          className="hidden md:flex items-center gap-2 px-4 py-2 text-sm transition-colors"
+          style={{
+            borderBottom: '1px solid var(--border)',
+            color: 'var(--text-muted)',
+            background: 'var(--surface)',
+          }}
+          aria-label="Colapsar menu"
         >
           <i className={`fa-solid ${collapsed ? 'fa-angles-right' : 'fa-angles-left'}`} />
-          <span className="text-sm">{collapsed ? 'Expandir' : 'Colapsar'}</span>
+          <span>{collapsed ? 'Expandir' : 'Colapsar'}</span>
         </button>
 
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-bg text-content">
-          <div className="max-w-[1800px]">
+        <main
+          className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6"
+          style={{ background: 'var(--bg)', color: 'var(--text)' }}
+        >
+          <div className="max-w-[1600px] mx-auto">
             <Outlet />
           </div>
         </main>
