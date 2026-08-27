@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+export const CreateEmpresaSchema = z.object({
+  nombre: z.string().min(2).max(120),
+  nit: z.string().min(5).max(20),
+  adminNombre: z.string().min(2).max(120),
+  adminEmail: z.string().email(),
+  adminPassword: z.string().min(6).max(100),
+  colorPrimario: z.string().max(9).optional(),
+});
+export type CreateEmpresaDto = z.infer<typeof CreateEmpresaSchema>;
+
 export const UpdateEmpresaSchema = z.object({
   nombre: z.string().min(2).max(120).optional(),
   logoUrl: z.string().max(255).optional(),
