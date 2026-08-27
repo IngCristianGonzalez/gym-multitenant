@@ -82,7 +82,7 @@ export default function SuperAdmin() {
           label="Crear gimnasio"
           icon="pi pi-plus"
           onClick={() => setModalOpen(true)}
-          className="!bg-[var(--brand)] !border-[var(--brand)] !text-white mt-2 sm:mt-0"
+          className="!bg-[var(--brand)] !border-[var(--brand)] !text-white mb-4 md:mb-0"
         />
       </div>
 
@@ -101,7 +101,7 @@ export default function SuperAdmin() {
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: 'rgba(255,107,0,0.08)' }}
+                style={{ background: 'rgba(var(--brand-rgb),0.08)' }}
               >
                 <i className={`fa-solid ${s.icon}`} style={{ color: 'var(--brand)' }} />
               </div>

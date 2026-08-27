@@ -82,6 +82,13 @@ export default function Configuracion() {
         resolucionFactura: resolucion || undefined,
         prefijoFactura: prefijo,
       });
+      const root = document.documentElement;
+      root.style.setProperty('--brand', color);
+      root.style.setProperty('--brand-strong', color);
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+      if (result) {
+        root.style.setProperty('--brand-rgb', `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`);
+      }
     } catch {
     } finally {
       setSaving(false);
@@ -170,7 +177,7 @@ export default function Configuracion() {
                   onClick={() => fileRef.current?.click()}
                   disabled={uploading}
                   className="w-full text-xs mt-2 py-1.5 rounded-lg transition-colors"
-                  style={{ color: 'var(--brand)', background: 'rgba(255,107,0,0.08)' }}
+                  style={{ color: 'var(--brand)', background: 'rgba(var(--brand-rgb),0.08)' }}
                 >
                   {uploading ? 'Subiendo...' : 'Cambiar logo'}
                 </button>
@@ -263,7 +270,7 @@ export default function Configuracion() {
                   <span
                     className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
                     style={{
-                      background: u.rol === 'super_admin' ? 'rgba(124,58,237,0.1)' : u.rol === 'admin' ? 'rgba(255,107,0,0.08)' : 'rgba(96,165,250,0.1)',
+                      background: u.rol === 'super_admin' ? 'rgba(124,58,237,0.1)' : u.rol === 'admin' ? 'rgba(var(--brand-rgb),0.08)' : 'rgba(96,165,250,0.1)',
                       color: u.rol === 'super_admin' ? '#7c3aed' : u.rol === 'admin' ? 'var(--brand)' : '#60a5fa',
                     }}
                   >

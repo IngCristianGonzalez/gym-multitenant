@@ -52,7 +52,7 @@ function OnlineStatus() {
         <button
           onClick={handleUpdate}
           className="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
-          style={{ background: 'rgba(255,107,0,0.08)', color: 'var(--brand)' }}
+          style={{ background: 'rgba(var(--brand-rgb),0.08)', color: 'var(--brand)' }}
         >
           <i className="fa-solid fa-arrow-up mr-1" />
           Actualizar
@@ -162,7 +162,7 @@ function SidebarContent({
       >
         <div
           className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: 'var(--brand)', boxShadow: '0 0 20px rgba(255, 107, 0, 0.3)' }}
+          style={{ background: 'var(--brand)', boxShadow: '0 0 20px rgba(var(--brand-rgb), 0.3)' }}
         >
           <i className="fa-solid fa-dumbbell text-white text-sm" />
         </div>
@@ -190,8 +190,8 @@ function SidebarContent({
                   collapsed ? 'justify-center' : ''
                 }`}
                 style={{
-                  background: active ? 'rgba(255,107,0,0.15)' : 'transparent',
-                  color: active ? '#FF6B00' : '#999',
+                  background: active ? 'rgba(var(--brand-rgb),0.15)' : 'transparent',
+                  color: active ? 'var(--brand)' : '#999',
                   fontWeight: active ? 600 : 400,
                 }}
               >
