@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import api from '../api/client';
+import { offlineGet, offlineMutate } from '../offline/api-client';
+import { useSync } from '../offline/sync-provider';
 import { abrirPdfFactura } from '../api/pdf';
-import { DataTable } from 'primereact/datatable';
-import { Column as PColumn } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
@@ -42,6 +42,8 @@ interface Colaborador {
 
 type Errores = Partial<Record<'identificacion' | 'primerNombre' | 'primerApellido' | 'celular', string>>;
 
+const PAGE_SIZE = 16;
+
 const validar = (form: typeof formInicial): Errores => {
   const e: Errores = {};
   if (!/^\d+$/.test(form.identificacion)) {
@@ -72,6 +74,8 @@ export default function Miembros() {
   const [list, setList] = useState<Miembro[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const { queueWrite } = useSync();
 
   // ---- Modal nuevo miembro ----
   const [nuevoOpen, setNuevoOpen] = useState(false);
@@ -103,14 +107,35 @@ export default function Miembros() {
 
   const load = () => {
     setLoading(true);
-    api.get('/miembros', { params: { search } }).then((res) => setList(res.data.data)).finally(() => setLoading(false));
+    offlineGet('/miembros', { params: { search }, cacheKey: `miembros:${search}` })
+      .then((res) => setList(res.data.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, [search]);
+  useEffect(() => { setPage(1); }, [search]);
 
   const errores = validar(form);
   const formValido = Object.keys(errores).length === 0 && frecuenciaId !== '';
   const rutinaSel = rutinas.find((r) => r.id === frecuenciaId);
+
+  const filteredList = useMemo(() => {
+    if (!search) return list;
+    const s = search.toLowerCase();
+    return list.filter(
+      (m) =>
+        m.primerNombre.toLowerCase().includes(s) ||
+        m.primerApellido.toLowerCase().includes(s) ||
+        m.identificacion.includes(s),
+    );
+  }, [list, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
+  const pagedList = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredList.slice(start, start + PAGE_SIZE);
+  }, [filteredList, page]);
 
   const abrirNuevo = async () => {
     setForm(formInicial);
@@ -142,7 +167,7 @@ export default function Miembros() {
     if (!formValido || !rutinaSel) return;
     setGuardando(true);
     try {
-      const res = await api.post('/miembros/registro', {
+      const res = await offlineMutate<any>('POST', '/miembros/registro', {
         miembro: {
           ...form,
           tipoIdentificacion: 'CC',
@@ -155,12 +180,22 @@ export default function Miembros() {
         ...(colaboradorId ? { colaboradorId } : {}),
         metodoPago,
       });
-      setRegistroOk({
-        facturaId: res.data.factura.id,
-        numeroFactura: res.data.factura.numeroFactura,
-        total: res.data.factura.total,
-        nombre: `${res.data.miembro.primerNombre} ${res.data.miembro.primerApellido}`,
-      });
+      if (res?.data?.factura) {
+        setRegistroOk({
+          facturaId: res.data.factura.id,
+          numeroFactura: res.data.factura.numeroFactura,
+          total: res.data.factura.total,
+          nombre: `${res.data.miembro.primerNombre} ${res.data.miembro.primerApellido}`,
+        });
+      } else {
+        // Queued offline — show success
+        setRegistroOk({
+          facturaId: 'pending',
+          numeroFactura: 'Pendiente',
+          total: rutinaSel.precio,
+          nombre: `${form.primerNombre} ${form.primerApellido}`,
+        });
+      }
       setForm(formInicial);
       load();
     } catch (err: any) {
@@ -181,28 +216,36 @@ export default function Miembros() {
     setAsignOpen(true);
     setAsignError('');
     setNueva({ frecuenciaId: '', colaboradorId: '', fechaInicio: new Date().toISOString().split('T')[0] });
-    const [ruts, asigs, cols] = await Promise.all([
-      api.get('/rutinas'),
-      api.get('/rutinas/asignaciones', { params: { miembroId: m.id } }),
-      api.get('/colaboradores'),
-    ]);
-    setRutinas(ruts.data);
-    setAsignaciones(asigs.data);
-    setColaboradores(cols.data);
+    try {
+      const [ruts, asigs, cols] = await Promise.all([
+        offlineGet('/rutinas', { cacheKey: 'rutinas' }),
+        offlineGet('/rutinas/asignaciones', { params: { miembroId: m.id }, cacheKey: `asignaciones:${m.id}` }),
+        offlineGet('/colaboradores', { cacheKey: 'colaboradores' }),
+      ]);
+      setRutinas(ruts.data);
+      setAsignaciones(asigs.data);
+      setColaboradores(cols.data);
+    } catch {
+      // Use cached data if available
+    }
   };
 
   const asignar = async () => {
     if (!miembroSel || !nueva.frecuenciaId) return;
     setAsignError('');
     try {
-      await api.post('/rutinas/asignar', {
+      await offlineMutate('POST', '/rutinas/asignar', {
         miembroId: miembroSel.id,
         frecuenciaId: nueva.frecuenciaId,
         fechaInicio: nueva.fechaInicio,
         ...(nueva.colaboradorId ? { colaboradorId: nueva.colaboradorId } : {}),
       });
-      const asigs = await api.get('/rutinas/asignaciones', { params: { miembroId: miembroSel.id } });
-      setAsignaciones(asigs.data);
+      try {
+        const asigs = await offlineGet('/rutinas/asignaciones', { params: { miembroId: miembroSel.id }, cacheKey: `asignaciones:${miembroSel.id}` });
+        setAsignaciones(asigs.data);
+      } catch {
+        // If offline, keep the current state
+      }
       setNueva({ frecuenciaId: '', colaboradorId: '', fechaInicio: new Date().toISOString().split('T')[0] });
       load();
     } catch (err: any) {
@@ -220,7 +263,7 @@ export default function Miembros() {
     <div>
       <PageHeader
         title="Miembros"
-        subtitle={`${list.length} miembro(s) en esta página`}
+        subtitle={`${filteredList.length} miembro(s)`}
         actions={
           <button className="btn-hero" onClick={abrirNuevo}>
             <i className="fa-solid fa-user-plus" />
@@ -239,52 +282,75 @@ export default function Miembros() {
         />
       </div>
 
-      <div className="card overflow-hidden">
-        <DataTable
-          value={list}
-          loading={loading}
-          paginator
-          rows={10}
-          rowsPerPageOptions={[10, 25, 50]}
-          dataKey="id"
-          responsiveLayout="stack"
-          breakpoint="640px"
-          emptyMessage="Sin miembros — registra el primero con el botón verde"
-          className="text-sm"
-        >
-          <PColumn field="identificacion" header="Identificación" sortable />
-          <PColumn header="Nombre" body={(m: Miembro) => `${m.primerNombre} ${m.primerApellido}`} sortable />
-          <PColumn field="celular" header="Celular" />
-          <PColumn
-            header="Rutina activa"
-            body={(m: Miembro) => {
+      {pagedList.length === 0 ? (
+        <div className="card p-8 text-center text-muted text-sm">
+          {search ? 'Sin resultados para esta búsqueda' : 'Sin miembros — registra el primero con el botón verde'}
+        </div>
+      ) : (
+        <>
+          <div className="card-grid">
+            {pagedList.map((m) => {
               const act = m.rutinasAsignadas?.[0];
-              return act ? (
-                <Badge color="purple">{act.frecuencia?.nombre}</Badge>
-              ) : (
-                <span className="text-xs text-muted">Sin rutina</span>
+              return (
+                <div key={m.id} className="card-item">
+                  <div className="card-item-header">
+                    <div className="min-w-0 flex-1">
+                      <p className="card-item-name">{m.primerNombre} {m.primerApellido}</p>
+                      <p className="card-item-sub">CC {m.identificacion}</p>
+                    </div>
+                    <EstadoBadge estado={m.estado} />
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted">
+                    <i className="fa-solid fa-phone text-[10px]" />
+                    {m.celular}
+                  </div>
+                  <div className="card-item-footer">
+                    {act ? (
+                      <Badge color="purple">{act.frecuencia?.nombre}</Badge>
+                    ) : (
+                      <span className="text-xs text-muted">Sin rutina</span>
+                    )}
+                    <Button
+                      icon="pi pi-calendar-plus"
+                      size="small"
+                      severity="secondary"
+                      outlined
+                      rounded
+                      tooltip="Renovar / asignar rutina"
+                      tooltipOptions={{ position: 'top' }}
+                      onClick={() => abrirAsignar(m)}
+                    />
+                  </div>
+                </div>
               );
-            }}
-          />
-          <PColumn
-            header="Estado"
-            body={(m: Miembro) => <EstadoBadge estado={m.estado} />}
-          />
-          <PColumn
-            header="Acciones"
-            body={(m: Miembro) => (
+            })}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-4">
               <Button
-                label="Rutina"
-                icon="pi pi-calendar-plus"
+                icon="pi pi-chevron-left"
                 size="small"
-                severity="secondary"
-                outlined
-                onClick={() => abrirAsignar(m)}
+                text
+                rounded
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
               />
-            )}
-          />
-        </DataTable>
-      </div>
+              <span className="text-sm text-muted tabular-nums">
+                Página {page} de {totalPages}
+              </span>
+              <Button
+                icon="pi pi-chevron-right"
+                size="small"
+                text
+                rounded
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              />
+            </div>
+          )}
+        </>
+      )}
 
       {/* ================= Modal nuevo miembro ================= */}
       <Dialog
@@ -323,12 +389,14 @@ export default function Miembros() {
                 label="Ver factura PDF"
                 icon="pi pi-file-pdf"
                 onClick={() => abrirPdfFactura(registroOk.facturaId)}
+                className="w-full sm:w-auto"
               />
               <Button
                 label="Cerrar"
                 severity="secondary"
                 text
                 onClick={() => setNuevoOpen(false)}
+                className="w-full sm:w-auto"
               />
             </div>
           </div>
@@ -470,14 +538,15 @@ export default function Miembros() {
               </div>
             )}
 
-            <div className="flex justify-end gap-2 mt-5">
-              <Button type="button" label="Cancelar" severity="secondary" text onClick={() => setNuevoOpen(false)} />
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-6 pt-4 border-t border-border">
+              <Button type="button" label="Cancelar" severity="secondary" text onClick={() => setNuevoOpen(false)} className="w-full sm:w-auto" />
               <Button
                 type="submit"
                 label={guardando ? 'Registrando…' : 'Registrar y facturar'}
                 icon="pi pi-check"
                 disabled={!formValido || guardando}
-                className="!bg-brand !border-brand"
+                loading={guardando}
+                className="w-full sm:w-auto"
               />
             </div>
           </form>
@@ -486,7 +555,7 @@ export default function Miembros() {
 
       {/* ================= Modal asignar rutina ================= */}
       <Dialog
-        header={miembroSel ? `Asignar rutina — ${miembroSel.primerNombre} ${miembroSel.primerApellido}` : 'Asignar rutina'}
+        header={miembroSel ? `Renovar rutina — ${miembroSel.primerNombre} ${miembroSel.primerApellido}` : 'Renovar rutina'}
         visible={asignOpen}
         onHide={() => setAsignOpen(false)}
         style={{ width: '92vw', maxWidth: '640px' }}
@@ -524,7 +593,7 @@ export default function Miembros() {
             </section>
 
             <section className="border-t border-border pt-4">
-              <h3 className="field-label">Asignar nueva</h3>
+              <h3 className="field-label">Asignar nueva rutina</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
                   <Dropdown
@@ -557,13 +626,21 @@ export default function Miembros() {
                   {asignError}
                 </div>
               )}
-              <div className="flex justify-end mt-3">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-4 pt-4 border-t border-border">
                 <Button
-                  label="Asignar"
+                  type="button"
+                  label="Cancelar"
+                  severity="secondary"
+                  text
+                  onClick={() => setAsignOpen(false)}
+                  className="w-full sm:w-auto"
+                />
+                <Button
+                  label="Asignar rutina"
                   icon="pi pi-check"
                   onClick={asignar}
                   disabled={!nueva.frecuenciaId}
-                  className="!bg-brand !border-brand"
+                  className="w-full sm:w-auto"
                 />
               </div>
             </section>

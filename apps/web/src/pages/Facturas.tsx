@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import api from '../api/client';
+import { offlineGet, offlineMutate } from '../offline/api-client';
 import { abrirPdfFactura } from '../api/pdf';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import {
@@ -25,18 +24,21 @@ interface Factura {
   plan?: { nombre: string } | null;
 }
 
+const PAGE_SIZE = 16;
+
 export default function Facturas() {
   const [facturas, setFacturas] = useState<Factura[]>([]);
   const [total, setTotal] = useState(0);
   const [anularSel, setAnularSel] = useState<Factura | null>(null);
   const [motivo, setMotivo] = useState('');
   const [anulando, setAnulando] = useState(false);
+  const [page, setPage] = useState(1);
 
   const load = () => {
-    api.get('/facturas', { params: { limit: 50 } }).then((res) => {
+    offlineGet('/facturas', { params: { limit: 200 }, cacheKey: 'facturas' }).then((res) => {
       setFacturas(res.data.data);
       setTotal(res.data.total);
-    });
+    }).catch(() => {});
   };
 
   useEffect(load, []);
@@ -45,7 +47,7 @@ export default function Facturas() {
     if (!anularSel) return;
     setAnulando(true);
     try {
-      await api.post(`/facturas/${anularSel.id}/anular`, motivo ? { motivo } : {});
+      await offlineMutate('POST', `/facturas/${anularSel.id}/anular`, motivo ? { motivo } : {});
       setAnularSel(null);
       setMotivo('');
       load();
@@ -62,6 +64,12 @@ export default function Facturas() {
     )
     .reduce((acc, f) => acc + f.total, 0);
 
+  const totalPages = Math.max(1, Math.ceil(facturas.length / PAGE_SIZE));
+  const pagedList = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return facturas.slice(start, start + PAGE_SIZE);
+  }, [facturas, page]);
+
   return (
     <div>
       <PageHeader
@@ -74,69 +82,84 @@ export default function Facturas() {
         <StatCard label="Recaudo este mes" value={formatMoney(totalMes)} icon="fa-coins" tone="purple" />
       </div>
 
-      <SectionCard>
-        <DataTable
-          value={facturas}
-          paginator
-          responsiveLayout="stack"
-          breakpoint="640px"
-          rows={10}
-          rowsPerPageOptions={[10, 25, 50]}
-          dataKey="id"
-          emptyMessage="Sin facturas — se crean automáticamente al registrar miembros"
-          className="text-sm"
-        >
-          <Column field="numeroFactura" header="Número" sortable />
-          <Column
-            header="Miembro"
-            body={(f: Factura) => `${f.miembro.primerNombre} ${f.miembro.primerApellido}`}
-          />
-          <Column
-            header="Concepto"
-            body={(f: Factura) => (
-              <span className="text-xs">{f.rutina?.nombre ?? f.plan?.nombre ?? '—'}</span>
-            )}
-          />
-          <Column
-            header="Fecha"
-            body={(f: Factura) => new Date(f.fechaEmision).toLocaleDateString()}
-            sortable
-            field="fechaEmision"
-          />
-          <Column field="total" header="Total" body={(f: Factura) => formatMoney(f.total)} />
-          <Column
-            header="Estado"
-            body={(f: Factura) => <EstadoBadge estado={f.estado} />}
-          />
-          <Column
-            header="Acciones"
-            body={(f: Factura) => (
-              <div className="flex gap-1.5">
-                <Button
-                  icon="pi pi-file-pdf"
-                  size="small"
-                  text
-                  severity="info"
-                  tooltip="Ver PDF"
-                  tooltipOptions={{ position: 'top' }}
-                  onClick={() => abrirPdfFactura(f.id)}
-                />
-                {f.estado === 'emitida' && (
-                  <Button
-                    icon="pi pi-ban"
-                    size="small"
-                    text
-                    severity="danger"
-                    tooltip="Anular"
-                    tooltipOptions={{ position: 'top' }}
-                    onClick={() => setAnularSel(f)}
-                  />
-                )}
+      {pagedList.length === 0 ? (
+        <div className="card p-8 text-center text-muted text-sm">
+          Sin facturas — se crean automáticamente al registrar miembros
+        </div>
+      ) : (
+        <>
+          <div className="card-grid">
+            {pagedList.map((f) => (
+              <div key={f.id} className="card-item">
+                <div className="card-item-header">
+                  <div className="min-w-0 flex-1">
+                    <p className="card-item-name">{f.numeroFactura}</p>
+                    <p className="card-item-sub">
+                      {f.miembro.primerNombre} {f.miembro.primerApellido}
+                    </p>
+                  </div>
+                  <EstadoBadge estado={f.estado} />
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <span>{new Date(f.fechaEmision).toLocaleDateString()}</span>
+                  <span className="font-medium text-content">{f.rutina?.nombre ?? f.plan?.nombre ?? '—'}</span>
+                </div>
+                <div className="card-item-footer">
+                  <span className="text-sm font-bold tabular-nums">{formatMoney(f.total)}</span>
+                  <div className="flex gap-1">
+                    <Button
+                      icon="pi pi-file-pdf"
+                      size="small"
+                      text
+                      severity="info"
+                      rounded
+                      tooltip="Ver PDF"
+                      tooltipOptions={{ position: 'top' }}
+                      onClick={() => abrirPdfFactura(f.id)}
+                    />
+                    {f.estado === 'emitida' && (
+                      <Button
+                        icon="pi pi-ban"
+                        size="small"
+                        text
+                        severity="danger"
+                        rounded
+                        tooltip="Anular"
+                        tooltipOptions={{ position: 'top' }}
+                        onClick={() => setAnularSel(f)}
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-          />
-        </DataTable>
-      </SectionCard>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <Button
+                icon="pi pi-chevron-left"
+                size="small"
+                text
+                rounded
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              />
+              <span className="text-sm text-muted tabular-nums">
+                Página {page} de {totalPages}
+              </span>
+              <Button
+                icon="pi pi-chevron-right"
+                size="small"
+                text
+                rounded
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              />
+            </div>
+          )}
+        </>
+      )}
 
       {/* Modal anular */}
       <Dialog
@@ -161,14 +184,15 @@ export default function Facturas() {
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
             />
-            <div className="flex justify-end gap-2 mt-4">
-              <Button label="Cancelar" severity="secondary" text onClick={() => setAnularSel(null)} />
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-5 pt-4 border-t border-border">
+              <Button label="Cancelar" severity="secondary" text onClick={() => setAnularSel(null)} className="w-full sm:w-auto" />
               <Button
-                label={anulando ? 'Anulando…' : 'Anular'}
+                label={anulando ? 'Anulando…' : 'Anular factura'}
                 icon="pi pi-ban"
                 severity="danger"
                 loading={anulando}
                 onClick={anular}
+                className="w-full sm:w-auto"
               />
             </div>
           </div>

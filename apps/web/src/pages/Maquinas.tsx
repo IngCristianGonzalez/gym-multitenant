@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
+import { offlineGet, offlineMutate } from '../offline/api-client';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import {
@@ -34,20 +35,20 @@ export default function Maquinas() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(formInicial);
 
-  const load = () => api.get('/maquinas').then((res) => setMaquinas(res.data));
+  const load = () => offlineGet('/maquinas', { cacheKey: 'maquinas' }).then((res) => setMaquinas(res.data)).catch(() => {});
 
   useEffect(() => { load(); }, []);
 
   const crear = async (e: React.FormEvent) => {
     e.preventDefault();
-    await api.post('/maquinas', form);
+    await offlineMutate('POST', '/maquinas', form);
     setForm(formInicial);
     setModalOpen(false);
     load();
   };
 
   const cambiarEstado = async (id: string, estado: string) => {
-    await api.put(`/maquinas/${id}/estado`, { estado });
+    await offlineMutate('PUT', `/maquinas/${id}/estado`, { estado });
     load();
   };
 
@@ -201,9 +202,9 @@ export default function Maquinas() {
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2 mt-5">
-            <Button type="button" label="Cancelar" severity="secondary" text onClick={() => setModalOpen(false)} />
-            <Button type="submit" label="Guardar" icon="pi pi-check" className="!bg-brand !border-brand" />
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-6 pt-4 border-t border-border">
+            <Button type="button" label="Cancelar" severity="secondary" text onClick={() => setModalOpen(false)} className="w-full sm:w-auto" />
+            <Button type="submit" label="Guardar máquina" icon="pi pi-check" className="w-full sm:w-auto" />
           </div>
         </form>
       </Dialog>

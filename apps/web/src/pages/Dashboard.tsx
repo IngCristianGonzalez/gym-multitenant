@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
+import { offlineGet } from '../offline/api-client';
 import { DashboardMetrics } from '@gym/api-types';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { baseOptions, doughnutOptions, brandColor, pastelPalette } from '../components/charts';
@@ -16,7 +17,7 @@ export default function Dashboard() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
 
   useEffect(() => {
-    api.get('/config/dashboard').then((res) => setMetrics(res.data));
+    offlineGet('/config/dashboard', { cacheKey: 'dashboard' }).then((res) => setMetrics(res.data)).catch(() => {});
   }, []);
 
   if (!metrics)

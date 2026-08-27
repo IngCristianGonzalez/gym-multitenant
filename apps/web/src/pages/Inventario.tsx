@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import api from '../api/client';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
+import { offlineGet, offlineMutate } from '../offline/api-client';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import {
@@ -32,10 +31,13 @@ const formProductoInicial = {
   unidadMedida: 'unidad',
 };
 
+const PAGE_SIZE = 16;
+
 export default function Inventario() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [movimientos, setMovimientos] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
 
   // Modal nuevo producto
   const [productoOpen, setProductoOpen] = useState(false);
@@ -51,9 +53,9 @@ export default function Inventario() {
   const [guardando, setGuardando] = useState(false);
 
   const load = () => {
-    api.get('/inventario/productos').then((res) => setProductos(res.data));
-    api.get('/inventario/movimientos').then((res) => setMovimientos(res.data));
-    api.get('/inventario/categorias').then((res) => setCategorias(res.data));
+    offlineGet('/inventario/productos', { cacheKey: 'inventario:productos' }).then((res) => setProductos(res.data)).catch(() => {});
+    offlineGet('/inventario/movimientos', { cacheKey: 'inventario:movimientos' }).then((res) => setMovimientos(res.data)).catch(() => {});
+    offlineGet('/inventario/categorias', { cacheKey: 'inventario:categorias' }).then((res) => setCategorias(res.data)).catch(() => {});
   };
 
   useEffect(load, []);
@@ -76,7 +78,7 @@ export default function Inventario() {
   const crearProducto = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!productoValido || !categorias[0]) return;
-    await api.post('/inventario/productos', {
+    await offlineMutate('POST', '/inventario/productos', {
       ...form,
       categoriaId: categorias[0].id,
       precioVenta: venta,
@@ -114,7 +116,7 @@ export default function Inventario() {
     if (!movProducto || !movValido) return;
     setGuardando(true);
     try {
-      await api.post('/inventario/movimientos', {
+      await offlineMutate('POST', '/inventario/movimientos', {
         productoId: movProducto.id,
         tipo: movTipo,
         cantidad: cantidadNum,
@@ -128,6 +130,12 @@ export default function Inventario() {
       setGuardando(false);
     }
   };
+
+  const totalPages = Math.max(1, Math.ceil(productos.length / PAGE_SIZE));
+  const pagedList = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return productos.slice(start, start + PAGE_SIZE);
+  }, [productos, page]);
 
   return (
     <div>
@@ -159,108 +167,131 @@ export default function Inventario() {
       </div>
 
       <SectionCard title="Productos">
-        <DataTable
-          value={productos}
-          paginator
-          responsiveLayout="stack"
-          breakpoint="640px"
-          rows={10}
-          rowsPerPageOptions={[10, 25, 50]}
-          dataKey="id"
-          emptyMessage="Sin productos — agrega el primero"
-          className="text-sm"
-        >
-          <Column field="nombre" header="Producto" sortable />
-          <Column
-            header="Stock"
-            body={(p: Producto) => (
-              <div className="flex items-center gap-2">
-                <span className="font-semibold tabular-nums">{p.stockActual}</span>
-                <span className="text-xs text-muted">{p.unidadMedida}</span>
-                {p.stockActual < p.stockMinimo && <Badge color="red">Bajo mínimo</Badge>}
+        {pagedList.length === 0 ? (
+          <p className="text-muted text-sm text-center py-4">Sin productos — agrega el primero</p>
+        ) : (
+          <>
+            <div className="card-grid">
+              {pagedList.map((p) => {
+                const margen = p.precioVenta - p.precioCompra;
+                const pct = p.precioCompra > 0 ? (margen / p.precioCompra) * 100 : 0;
+                const lowStock = p.stockActual < p.stockMinimo;
+                return (
+                  <div key={p.id} className="card-item">
+                    <div className="card-item-header">
+                      <div className="min-w-0 flex-1">
+                        <p className="card-item-name">{p.nombre}</p>
+                        <p className="card-item-sub">{p.unidadMedida}</p>
+                      </div>
+                      {lowStock && <Badge color="red">Bajo mín</Badge>}
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                      <div>
+                        <span className="text-muted">Stock</span>
+                        <span className={`ml-1 font-semibold tabular-nums ${lowStock ? 'text-red-500' : ''}`}>
+                          {p.stockActual}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted">Margen</span>
+                        <Badge color={margen > 0 ? 'green' : margen === 0 ? 'gray' : 'red'}>
+                          {pct.toFixed(0)}%
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="card-item-footer">
+                      <span className="text-xs text-muted">
+                        {formatMoney(p.precioCompra)} → {formatMoney(p.precioVenta)}
+                      </span>
+                      <div className="flex gap-1">
+                        <Button
+                          icon="fa-solid fa-arrow-down"
+                          size="small"
+                          severity="success"
+                          outlined
+                          rounded
+                          tooltip="Ingreso"
+                          tooltipOptions={{ position: 'top' }}
+                          onClick={() => abrirMovimiento(p, 'entrada')}
+                        />
+                        <Button
+                          icon="fa-solid fa-arrow-up"
+                          size="small"
+                          severity="danger"
+                          outlined
+                          rounded
+                          tooltip="Salida"
+                          tooltipOptions={{ position: 'top' }}
+                          disabled={p.stockActual <= 0}
+                          onClick={() => abrirMovimiento(p, 'salida')}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-4">
+                <Button
+                  icon="pi pi-chevron-left"
+                  size="small"
+                  text
+                  rounded
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                />
+                <span className="text-sm text-muted tabular-nums">
+                  Página {page} de {totalPages}
+                </span>
+                <Button
+                  icon="pi pi-chevron-right"
+                  size="small"
+                  text
+                  rounded
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                />
               </div>
             )}
-            sortable
-            field="stockActual"
-          />
-          <Column
-            header="Compra"
-            body={(p: Producto) => formatMoney(p.precioCompra)}
-            sortable
-            field="precioCompra"
-          />
-          <Column
-            header="Venta"
-            body={(p: Producto) => formatMoney(p.precioVenta)}
-            sortable
-            field="precioVenta"
-          />
-          <Column
-            header="Margen"
-            body={(p: Producto) => {
-              const m = p.precioVenta - p.precioCompra;
-              const pct = p.precioCompra > 0 ? (m / p.precioCompra) * 100 : 0;
-              return (
-                <Badge color={m > 0 ? 'green' : m === 0 ? 'gray' : 'red'}>
-                  {formatMoney(m)} · {pct.toFixed(0)}%
-                </Badge>
-              );
-            }}
-          />
-          <Column
-            header="Acciones"
-            body={(p: Producto) => (
-              <div className="flex gap-1.5">
-                <Button
-                  icon="fa-solid fa-arrow-down"
-                  size="small"
-                  severity="success"
-                  outlined
-                  tooltip={`Ingreso a bodega`}
-                  tooltipOptions={{ position: 'top' }}
-                  onClick={() => abrirMovimiento(p, 'entrada')}
-                />
-                <Button
-                  icon="fa-solid fa-arrow-up"
-                  size="small"
-                  severity="danger"
-                  outlined
-                  tooltip="Salida / venta"
-                  tooltipOptions={{ position: 'top' }}
-                  disabled={p.stockActual <= 0}
-                  onClick={() => abrirMovimiento(p, 'salida')}
-                />
-              </div>
-            )}
-          />
-        </DataTable>
+          </>
+        )}
       </SectionCard>
 
       <SectionCard title="Últimos movimientos" className="mt-4">
-        <DataTable
-          value={movimientos.slice(0, 50)}
-          paginator
-          responsiveLayout="stack"
-          breakpoint="640px"
-          rows={10}
-          dataKey="id"
-          emptyMessage="Sin movimientos"
-          className="text-sm"
-        >
-          <Column field="producto.nombre" header="Producto" />
-          <Column
-            header="Tipo"
-            body={(m: any) => <EstadoBadge estado={m.tipo} label={m.tipo === 'entrada' ? 'Entrada' : 'Salida'} />}
-          />
-          <Column field="cantidad" header="Cantidad" />
-          <Column field="motivo" header="Motivo" />
-          <Column
-            header="Fecha"
-            body={(m: any) => new Date(m.createdAt).toLocaleString()}
-            field="createdAt"
-            sortable
-          />
-        </DataTable>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-xs text-muted uppercase tracking-wide">
+                <th className="py-2 px-2">Producto</th>
+                <th className="py-2 px-2">Tipo</th>
+                <th className="py-2 px-2">Cantidad</th>
+                <th className="py-2 px-2">Motivo</th>
+                <th className="py-2 px-2">Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              {movimientos.slice(0, 50).length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center text-muted py-4">Sin movimientos</td>
+                </tr>
+              ) : (
+                movimientos.slice(0, 50).map((m) => (
+                  <tr key={m.id} className="border-b border-border/50 last:border-0">
+                    <td className="py-2 px-2 font-medium">{m.producto?.nombre}</td>
+                    <td className="py-2 px-2">
+                      <EstadoBadge estado={m.tipo} label={m.tipo === 'entrada' ? 'Entrada' : 'Salida'} />
+                    </td>
+                    <td className="py-2 px-2 tabular-nums">{m.cantidad}</td>
+                    <td className="py-2 px-2 text-muted">{m.motivo}</td>
+                    <td className="py-2 px-2 text-muted">{new Date(m.createdAt).toLocaleString()}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </SectionCard>
 
       {/* ============ Modal nuevo producto ============ */}
@@ -360,14 +391,14 @@ export default function Inventario() {
               </select>
             </div>
           </div>
-          <div className="flex justify-end gap-2 mt-5">
-            <Button type="button" label="Cancelar" severity="secondary" text onClick={() => setProductoOpen(false)} />
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-6 pt-4 border-t border-border">
+            <Button type="button" label="Cancelar" severity="secondary" text onClick={() => setProductoOpen(false)} className="w-full sm:w-auto" />
             <Button
               type="submit"
               label="Guardar producto"
               icon="pi pi-check"
               disabled={!productoValido}
-              className="!bg-brand !border-brand"
+              className="w-full sm:w-auto"
             />
           </div>
         </form>
@@ -467,8 +498,8 @@ export default function Inventario() {
               </div>
             )}
 
-            <div className="flex justify-end gap-2 mt-5">
-              <Button label="Cancelar" severity="secondary" text onClick={() => setMovOpen(false)} />
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-6 pt-4 border-t border-border">
+              <Button label="Cancelar" severity="secondary" text onClick={() => setMovOpen(false)} className="w-full sm:w-auto" />
               <Button
                 label={guardando ? 'Registrando…' : movTipo === 'entrada' ? 'Registrar ingreso' : 'Registrar salida'}
                 icon={`fa-solid ${movTipo === 'entrada' ? 'fa-arrow-down' : 'fa-arrow-up'}`}
@@ -476,6 +507,7 @@ export default function Inventario() {
                 disabled={!movValido || guardando}
                 loading={guardando}
                 onClick={confirmarMovimiento}
+                className="w-full sm:w-auto"
               />
             </div>
           </div>

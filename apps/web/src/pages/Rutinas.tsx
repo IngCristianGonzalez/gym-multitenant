@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import api from '../api/client';
-import { DataTable } from 'primereact/datatable';
-import { Column as PColumn } from 'primereact/column';
+import { offlineGet, offlineMutate } from '../offline/api-client';
 import { Button } from 'primereact/button';
 import {
   Badge,
@@ -43,7 +42,7 @@ export default function Rutinas() {
   const [guardando, setGuardando] = useState(false);
 
   const load = () => {
-    api.get('/rutinas').then((res) => setRutinas(res.data));
+    offlineGet('/rutinas', { cacheKey: 'rutinas' }).then((res) => setRutinas(res.data)).catch(() => {});
   };
 
   useEffect(load, []);
@@ -65,7 +64,7 @@ export default function Rutinas() {
     if (!formValido) return;
     setGuardando(true);
     try {
-      await api.post('/rutinas', {
+      await offlineMutate('POST', '/rutinas', {
         nombre: form.nombre,
         tipoPeriodo: form.tipoPeriodo,
         descripcion: form.descripcion,
@@ -82,6 +81,15 @@ export default function Rutinas() {
       setGuardando(false);
     }
   };
+
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 12;
+
+  const totalPages = Math.max(1, Math.ceil(rutinas.length / PAGE_SIZE));
+  const pagedList = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return rutinas.slice(start, start + PAGE_SIZE);
+  }, [rutinas, page]);
 
   return (
     <div>
@@ -180,40 +188,70 @@ export default function Rutinas() {
               label={guardando ? 'Creando…' : 'Crear rutina'}
               icon="pi pi-plus"
               disabled={!formValido || guardando}
-              className="!bg-brand !border-brand self-end w-full sm:w-auto"
+              loading={guardando}
+              className="w-full sm:w-auto mt-2"
             />
           </form>
         </SectionCard>
 
         {/* Catálogo */}
-        <SectionCard title={`Rutinas disponibles (${rutinas.length})`} className="lg:col-span-3">
-          <DataTable
-            value={rutinas}
-            dataKey="id"
-            paginator
-            rows={8}
-            responsiveLayout="stack"
-            breakpoint="640px"
-            emptyMessage="Sin rutinas — crea la primera"
-            className="text-sm"
-          >
-            <PColumn field="nombre" header="Nombre" sortable />
-            <PColumn
-              header="Periodo"
-              body={(r: Rutina) => (
-                <Badge color="blue">{r.tipoPeriodo} · {r.duracionDias ?? '—'} días</Badge>
+        <SectionCard
+          title={`Rutinas disponibles (${rutinas.length})`}
+          className="lg:col-span-3"
+        >
+          {pagedList.length === 0 ? (
+            <p className="text-muted text-sm text-center py-6">Sin rutinas — crea la primera</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                {pagedList.map((r) => (
+                  <div key={r.id} className="card card-hover p-4 animate-fade-up">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="font-semibold text-sm truncate">{r.nombre}</p>
+                      <Badge color="blue">
+                        {r.tipoPeriodo} · {r.duracionDias ?? '—'} días
+                      </Badge>
+                    </div>
+                    {r.descripcion && (
+                      <p className="text-xs text-muted mb-2 line-clamp-2">{r.descripcion}</p>
+                    )}
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <span className="text-base font-bold tabular-nums text-brand">
+                        {formatMoney(r.precio)}
+                      </span>
+                      <span className="text-xs text-muted">
+                        {r.ejercicios.length} ejercicio{r.ejercicios.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-3 mt-4">
+                  <Button
+                    icon="pi pi-chevron-left"
+                    size="small"
+                    text
+                    rounded
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  />
+                  <span className="text-sm text-muted tabular-nums">
+                    Página {page} de {totalPages}
+                  </span>
+                  <Button
+                    icon="pi pi-chevron-right"
+                    size="small"
+                    text
+                    rounded
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  />
+                </div>
               )}
-            />
-            <PColumn
-              header="Precio"
-              body={(r: Rutina) => (
-                <span className="font-semibold tabular-nums">{formatMoney(r.precio)}</span>
-              )}
-              sortable
-              field="precio"
-            />
-            <PColumn header="Ejercicios" body={(r: Rutina) => r.ejercicios.length} />
-          </DataTable>
+            </>
+          )}
         </SectionCard>
       </div>
     </div>

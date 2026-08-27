@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
+import { offlineGet, offlineMutate } from '../offline/api-client';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import {
@@ -61,7 +62,7 @@ export default function Colaboradores() {
   const [detalleOpen, setDetalleOpen] = useState(false);
 
   const load = () => {
-    api.get('/colaboradores').then((res) => setList(res.data));
+    offlineGet('/colaboradores', { cacheKey: 'colaboradores' }).then((res) => setList(res.data)).catch(() => {});
   };
 
   useEffect(load, []);
@@ -71,7 +72,7 @@ export default function Colaboradores() {
     setError('');
     setGuardando(true);
     try {
-      await api.post('/colaboradores', {
+      await offlineMutate('POST', '/colaboradores', {
         nombre: form.nombre,
         cargo: form.cargo,
         ...(form.identificacion ? { identificacion: form.identificacion } : {}),
@@ -88,9 +89,15 @@ export default function Colaboradores() {
   };
 
   const abrirDetalle = async (c: Colaborador) => {
-    const res = await api.get(`/colaboradores/${c.id}`);
-    setDetalle(res.data);
-    setDetalleOpen(true);
+    try {
+      const res = await offlineGet(`/colaboradores/${c.id}`, { cacheKey: `colaborador:${c.id}` });
+      setDetalle(res.data);
+      setDetalleOpen(true);
+    } catch {
+      // If offline, show basic info
+      setDetalle({ ...c, asignaciones: [] } as any);
+      setDetalleOpen(true);
+    }
   };
 
   const totalProduccion = list.reduce((acc, c) => acc + c.produccionTotal, 0);
@@ -241,14 +248,14 @@ export default function Colaboradores() {
             </div>
           )}
 
-          <div className="flex justify-end gap-2 mt-5">
-            <Button type="button" label="Cancelar" severity="secondary" text onClick={() => setModalOpen(false)} />
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-6 pt-4 border-t border-border">
+            <Button type="button" label="Cancelar" severity="secondary" text onClick={() => setModalOpen(false)} className="w-full sm:w-auto" />
             <Button
               type="submit"
-              label={guardando ? 'Guardando…' : 'Guardar'}
+              label={guardando ? 'Guardando…' : 'Guardar colaborador'}
               icon="pi pi-check"
               loading={guardando}
-              className="!bg-brand !border-brand"
+              className="w-full sm:w-auto"
             />
           </div>
         </form>
