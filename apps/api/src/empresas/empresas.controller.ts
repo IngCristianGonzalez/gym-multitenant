@@ -13,7 +13,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import { EmpresasService } from './empresas.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/roles.guard';
@@ -26,6 +27,9 @@ import {
   CreateUserSchema,
 } from '@gym/api-types';
 import { ZodValidationPipe } from '../common/zod.decorator';
+
+const LOGOS_DIR = join(process.cwd(), 'uploads', 'logos');
+if (!existsSync(LOGOS_DIR)) mkdirSync(LOGOS_DIR, { recursive: true });
 
 @Controller('empresas')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -69,9 +73,9 @@ export class EmpresasController {
   @Post('logo')
   @Roles('super_admin', 'admin')
   @UseInterceptors(
-    FileInterceptor('logo', {
-      storage: diskStorage({
-        destination: './uploads/logos',
+      FileInterceptor('logo', {
+        storage: diskStorage({
+          destination: (_req, _file, cb) => cb(null, LOGOS_DIR),
         filename: (_req, file, cb) => {
           const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
           cb(null, uniqueSuffix + extname(file.originalname));

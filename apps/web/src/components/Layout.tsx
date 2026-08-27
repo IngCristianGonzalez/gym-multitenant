@@ -10,11 +10,11 @@ const baseNavItems = [
   { to: '/miembros', label: 'Miembros', icon: 'fa-users', roles: ['admin', 'recepcionista'] },
   { to: '/facturas', label: 'Facturas', icon: 'fa-file-invoice-dollar', roles: ['admin', 'recepcionista'] },
   { to: '/inventario', label: 'Inventario', icon: 'fa-boxes-stacked', roles: ['admin', 'recepcionista'] },
-  { to: '/maquinas', label: 'Maquinas', icon: 'fa-dumbbell', roles: ['admin', 'recepcionista'] },
+  { to: '/maquinas', label: 'Máquinas', icon: 'fa-dumbbell', roles: ['admin', 'recepcionista'] },
   { to: '/rutinas', label: 'Rutinas', icon: 'fa-calendar-check', roles: ['admin', 'recepcionista'] },
   { to: '/colaboradores', label: 'Colaboradores', icon: 'fa-people-group', roles: ['admin', 'recepcionista'] },
   { to: '/super-admin', label: 'Panel Admin', icon: 'fa-shield-halved', roles: ['super_admin'] },
-  { to: '/configuracion', label: 'Configuracion', icon: 'fa-gear', roles: ['super_admin', 'admin'] },
+  { to: '/configuracion', label: 'Configuración', icon: 'fa-gear', roles: ['super_admin', 'admin'] },
 ];
 
 function useTheme() {
@@ -52,7 +52,7 @@ function OnlineStatus() {
         <button
           onClick={handleUpdate}
           className="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
-          style={{ background: 'rgba(43,138,94,0.08)', color: 'var(--brand)' }}
+          style={{ background: 'rgba(255,107,0,0.08)', color: 'var(--brand)' }}
         >
           <i className="fa-solid fa-arrow-up mr-1" />
           Actualizar
@@ -63,7 +63,7 @@ function OnlineStatus() {
         onClick={() => setShowDetail(!showDetail)}
         className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors"
         style={{ background: 'var(--border)' }}
-        title={isOnline ? 'En linea' : 'Sin conexion'}
+        title={isOnline ? 'En línea' : 'Sin conexión'}
       >
         <span
           className="w-2 h-2 rounded-full"
@@ -98,11 +98,11 @@ function OnlineStatus() {
               style={{ background: isOnline ? '#3da06e' : '#f59e0b' }}
             />
             <span className="text-sm font-semibold">
-              {isOnline ? 'Conectado' : 'Sin conexion'}
+              {isOnline ? 'Conectado' : 'Sin conexión'}
             </span>
           </div>
           <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
-            Los datos se guardan localmente{!isOnline ? ' y se sincronizaran al reconectar' : ''}.
+            Los datos se guardan localmente{!isOnline ? ' y se sincronizarán al reconectar' : ''}.
           </p>
           {pendingSync > 0 && (
             <p className="text-xs mb-2" style={{ color: '#f59e0b' }}>
@@ -118,7 +118,7 @@ function OnlineStatus() {
           )}
           {lastSyncAt && (
             <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
-              Ultima sync: {new Date(lastSyncAt).toLocaleTimeString()}
+              Última sync: {new Date(lastSyncAt).toLocaleTimeString()}
             </p>
           )}
           {isOnline && pendingSync > 0 && !syncing && (
@@ -153,21 +153,21 @@ function SidebarContent({
   return (
     <div
       className="flex flex-col h-full"
-      style={{ background: '#1a1a1a', color: '#ddd' }}
+      style={{ background: '#0A0A0A', color: '#ddd' }}
     >
       {/* Brand */}
       <div
         className={`px-4 py-5 flex items-center gap-3 ${collapsed ? 'justify-center px-2' : ''}`}
-        style={{ borderBottom: '1px solid #2a2a2a' }}
+        style={{ borderBottom: '1px solid #1A1A1A' }}
       >
         <div
           className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: 'var(--brand)' }}
+          style={{ background: 'var(--brand)', boxShadow: '0 0 20px rgba(255, 107, 0, 0.3)' }}
         >
           <i className="fa-solid fa-dumbbell text-white text-sm" />
         </div>
         {!collapsed && (
-          <span className="text-lg font-bold tracking-tight">Gym Multiempresa</span>
+          <span className="text-lg font-bold tracking-tight" style={{ fontFamily: 'Orbitron, sans-serif' }}>Nexus Fit</span>
         )}
       </div>
 
@@ -190,8 +190,8 @@ function SidebarContent({
                   collapsed ? 'justify-center' : ''
                 }`}
                 style={{
-                  background: active ? 'rgba(61,160,110,0.15)' : 'transparent',
-                  color: active ? '#3da06e' : '#999',
+                  background: active ? 'rgba(255,107,0,0.15)' : 'transparent',
+                  color: active ? '#FF6B00' : '#999',
                   fontWeight: active ? 600 : 400,
                 }}
               >
@@ -252,7 +252,7 @@ function SidebarContent({
               style={{ color: '#e05555' }}
             >
               <i className="fa-solid fa-right-from-bracket text-xs" />
-              Cerrar sesion
+              Cerrar sesión
             </button>
           </div>
         </div>
@@ -326,7 +326,7 @@ export default function Layout() {
             >
               <i className="fa-solid fa-bars" />
             </button>
-            <span className="md:hidden font-bold">Gym Multiempresa</span>
+            <span className="md:hidden font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>Nexus Fit</span>
           </div>
           <div className="relative">
             <OnlineStatus />

@@ -15,7 +15,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // Serve uploaded files (logos)
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads' });
+  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
 
   const prisma = app.get(PrismaService);
   await prisma.onModuleInit();

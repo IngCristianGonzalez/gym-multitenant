@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const { login } = useAuth();
-  const [email, setEmail] = useState('admin@gym.com');
-  const [password, setPassword] = useState('secret123');
+  const [email, setEmail] = useState('admin@nexusfit.com');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -18,116 +18,84 @@ export default function Login() {
       await login(email, password);
       navigate('/');
     } catch {
-      setError('Credenciales invalidas');
+      setError('Credenciales inválidas');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      className="flex items-center justify-center min-h-screen px-4"
-      style={{ background: 'var(--bg)', color: 'var(--text)' }}
-    >
-      <form
-        onSubmit={submit}
-        className="w-full max-w-sm animate-fade-up"
-        style={{
-          background: 'var(--surface)',
-          borderRadius: '24px',
-          padding: '2rem 1.5rem',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
-        }}
-      >
-        <div className="text-center mb-6">
-          <div
-            className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'rgba(43,138,94,0.08)' }}
-          >
-            <i className="fa-solid fa-dumbbell text-2xl" style={{ color: 'var(--brand)' }} />
+    <div className="login-page">
+      {/* Left visual panel — clean background */}
+      <div className="visual-panel" />
+
+      {/* Right form panel */}
+      <div className="form-container">
+        <div className="login-panel">
+          <div className="login-header">
+            <div className="login-logo">
+              <i className="fa-solid fa-bolt" />
+            </div>
+            <h2 className="section-title">Iniciar sesión</h2>
           </div>
-          <h1 className="text-xl font-bold">Gym Multiempresa</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            Inicia sesion para continuar
-          </p>
+
+          <form onSubmit={submit} className="login-form">
+            <div className="form-group">
+              <div className="input-with-icon">
+                <i className="fa-solid fa-envelope" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Correo electrónico"
+                  required
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <div className="input-with-icon">
+                <i className="fa-solid fa-lock" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Contraseña"
+                  required
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="alert-error">
+                <i className="fa-solid fa-circle-exclamation mr-1" />
+                {error}
+              </div>
+            )}
+
+            <div className="btn-login-container">
+              <button type="submit" className="btn-primary" disabled={loading}>
+                {loading ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin" /> Cargando...
+                  </>
+                ) : (
+                  <>
+                    Iniciar sesión <i className="fa-solid fa-chevron-right" />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+
+          <div className="auth-footer">
+            <p className="footer-text">
+              <span className="light">Gestión total para tu gimnasio.</span>
+            </p>
+          </div>
         </div>
-
-        {error && (
-          <div
-            className="text-sm px-4 py-3 flex items-start gap-2 mb-4"
-            style={{
-              borderRadius: 'var(--radius-sm)',
-              background: 'rgba(217,74,74,0.08)',
-              color: '#d94a4a',
-              border: '1.5px solid rgba(217,74,74,0.2)',
-            }}
-          >
-            <i className="fa-solid fa-circle-exclamation mt-0.5" />
-            {error}
-          </div>
-        )}
-
-        <div className="space-y-4 mb-5">
-          <div>
-            <label className="field-label">Correo electronico</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@gym.com"
-              className="input"
-              style={{ padding: '0.75rem 1rem' }}
-              required
-              autoFocus
-            />
-          </div>
-          <div>
-            <label className="field-label">Contrasena</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="input"
-              style={{ padding: '0.75rem 1rem' }}
-              required
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full font-semibold text-white transition-all"
-          style={{
-            padding: '0.85rem',
-            borderRadius: 'var(--radius-sm)',
-            background: 'var(--text)',
-            color: 'var(--bg)',
-            fontSize: '0.9rem',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1,
-            border: 'none',
-            fontFamily: 'inherit',
-          }}
-        >
-          {loading ? (
-            <>
-              <i className="fa-solid fa-circle-notch fa-spin mr-2" />
-              Ingresando...
-            </>
-          ) : (
-            <>
-              <i className="fa-solid fa-right-to-bracket mr-2" />
-              Ingresar
-            </>
-          )}
-        </button>
-
-        <p className="text-center text-xs mt-4" style={{ color: 'var(--text-muted)' }}>
-          Desarrollado por IngCristianGonzalez
-        </p>
-      </form>
+      </div>
     </div>
   );
 }

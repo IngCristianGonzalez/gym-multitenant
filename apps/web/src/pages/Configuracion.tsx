@@ -170,7 +170,7 @@ export default function Configuracion() {
                   onClick={() => fileRef.current?.click()}
                   disabled={uploading}
                   className="w-full text-xs mt-2 py-1.5 rounded-lg transition-colors"
-                  style={{ color: 'var(--brand)', background: 'rgba(43,138,94,0.08)' }}
+                  style={{ color: 'var(--brand)', background: 'rgba(255,107,0,0.08)' }}
                 >
                   {uploading ? 'Subiendo...' : 'Cambiar logo'}
                 </button>
@@ -263,7 +263,7 @@ export default function Configuracion() {
                   <span
                     className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
                     style={{
-                      background: u.rol === 'super_admin' ? 'rgba(124,58,237,0.1)' : u.rol === 'admin' ? 'rgba(43,138,94,0.08)' : 'rgba(96,165,250,0.1)',
+                      background: u.rol === 'super_admin' ? 'rgba(124,58,237,0.1)' : u.rol === 'admin' ? 'rgba(255,107,0,0.08)' : 'rgba(96,165,250,0.1)',
                       color: u.rol === 'super_admin' ? '#7c3aed' : u.rol === 'admin' ? 'var(--brand)' : '#60a5fa',
                     }}
                   >
@@ -307,7 +307,7 @@ export default function Configuracion() {
             <input className="input" type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
           </div>
           <div>
-            <label className="field-label">Contrasena</label>
+            <label className="field-label">Contraseña</label>
             <input className="input" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
           </div>
           <div>
@@ -341,7 +341,7 @@ export default function Configuracion() {
         {deleteUser && (
           <div>
             <p className="text-sm mb-4" style={{ color: 'var(--text)' }}>
-              Se eliminara a <strong>{deleteUser.nombre}</strong> ({deleteUser.email}).
+              Se eliminará a <strong>{deleteUser.nombre}</strong> ({deleteUser.email}).
             </p>
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
               <Button label="Cancelar" severity="secondary" text onClick={() => setDeleteUser(null)} className="w-full sm:w-auto" />

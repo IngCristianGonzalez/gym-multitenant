@@ -101,7 +101,7 @@ export default function SuperAdmin() {
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: 'rgba(43,138,94,0.08)' }}
+                style={{ background: 'rgba(255,107,0,0.08)' }}
               >
                 <i className={`fa-solid ${s.icon}`} style={{ color: 'var(--brand)' }} />
               </div>
@@ -223,8 +223,8 @@ export default function SuperAdmin() {
               <input className="input" type="email" value={form.adminEmail} onChange={(e) => setForm({ ...form, adminEmail: e.target.value })} placeholder="admin@migym.com" />
             </div>
             <div className="col-span-2">
-              <label className="field-label">Contrasena</label>
-              <input className="input" type="password" value={form.adminPassword} onChange={(e) => setForm({ ...form, adminPassword: e.target.value })} placeholder="Minimo 6 caracteres" />
+              <label className="field-label">Contraseña</label>
+              <input className="input" type="password" value={form.adminPassword} onChange={(e) => setForm({ ...form, adminPassword: e.target.value })} placeholder="Mínimo 6 caracteres" />
             </div>
           </div>
         </div>
@@ -252,7 +252,7 @@ export default function SuperAdmin() {
         {deleteConfirm && (
           <div>
             <p className="text-sm mb-4" style={{ color: 'var(--text)' }}>
-              Se eliminara <strong>{deleteConfirm.nombre}</strong> y todos sus datos (usuarios, miembros, facturas). Esta accion no se puede deshacer.
+              Se eliminará <strong>{deleteConfirm.nombre}</strong> y todos sus datos (usuarios, miembros, facturas). Esta acción no se puede deshacer.
             </p>
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
               <Button label="Cancelar" severity="secondary" text onClick={() => setDeleteConfirm(null)} className="w-full sm:w-auto" />
