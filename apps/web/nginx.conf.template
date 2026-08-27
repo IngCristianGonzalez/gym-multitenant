@@ -4,13 +4,21 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # Proxy API al servicio NestJS externo (Render)
+    # Proxy API al servicio NestJS externo
     location /api {
         proxy_pass ${API_URL};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 5m;
+    }
+
+    # Proxy uploaded files (logos)
+    location /uploads {
+        proxy_pass ${API_URL};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
     }
 
     # SPA fallback

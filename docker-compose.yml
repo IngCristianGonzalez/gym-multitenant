@@ -35,6 +35,8 @@ services:
       CORS_ORIGIN: http://localhost
     ports:
       - '3000:3000'
+    volumes:
+      - uploads:/app/apps/api/uploads
     depends_on:
       - postgres
 
@@ -52,3 +54,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

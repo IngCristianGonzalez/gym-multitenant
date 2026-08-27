@@ -21,5 +21,6 @@ COPY --from=builder /repo/apps/api/dist ./apps/api/dist
 COPY --from=builder /repo/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /repo/apps/api/package.json ./apps/api/package.json
 COPY --from=builder /repo/package.json ./package.json
+RUN mkdir -p /app/apps/api/uploads/logos
 EXPOSE 3000
 CMD ["node", "apps/api/dist/main.js"]
