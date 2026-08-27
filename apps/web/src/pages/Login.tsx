@@ -26,8 +26,39 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      {/* Left visual panel — clean background */}
-      <div className="visual-panel" />
+      {/* Left visual panel — brand identity */}
+      <div className="visual-panel">
+        <div className="visual-content">
+          <div className="visual-brand">
+            <div className="visual-logo">
+              <i className="fa-solid fa-bolt" />
+            </div>
+            <h1 className="visual-title">NEXUS FIT</h1>
+            <p className="visual-subtitle">Plataforma de gestión integral para gimnasios</p>
+          </div>
+
+          <div className="visual-features">
+            <div className="visual-feature">
+              <i className="fa-solid fa-users" />
+              <span>Gestión de miembros y accesos</span>
+            </div>
+            <div className="visual-feature">
+              <i className="fa-solid fa-file-invoice-dollar" />
+              <span>Facturación en tiempo real</span>
+            </div>
+            <div className="visual-feature">
+              <i className="fa-solid fa-chart-line" />
+              <span>Reportes y métricas</span>
+            </div>
+            <div className="visual-feature">
+              <i className="fa-solid fa-wifi" />
+              <span>Funciona sin conexión</span>
+            </div>
+          </div>
+
+          <p className="visual-footer">Desarrollado por IngCristianGonzalez</p>
+        </div>
+      </div>
 
       {/* Right form panel */}
       <div className="form-container">
