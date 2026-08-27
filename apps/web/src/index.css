@@ -194,3 +194,68 @@ body {
 .p-datatable.p-datatable-responsive-stack .p-datatable-thead {
   display: none;
 }
+
+/* ---------- PrimeReact brand button ---------- */
+.p-button.p-button-brand,
+.p-button.p-component.p-button-success,
+.p-button.p-component:not(.p-button-secondary):not(.p-button-danger):not(.p-button-info):not(.p-button-warning):not(.p-button-help):not(.p-button-text):not(.p-button-link):not(.p-button-outlined) {
+  background-color: var(--brand) !important;
+  border-color: var(--brand) !important;
+  color: #fff !important;
+}
+.p-button.p-button-brand:hover,
+.p-button.p-component.p-button-success:hover,
+.p-button.p-component:not(.p-button-secondary):not(.p-button-danger):not(.p-button-info):not(.p-button-warning):not(.p-button-help):not(.p-button-text):not(.p-button-link):not(.p-button-outlined):hover {
+  background-color: var(--brand-strong) !important;
+  border-color: var(--brand-strong) !important;
+}
+
+/* Modal footer buttons — bigger touch targets */
+.p-dialog .p-dialog-footer .p-button {
+  padding: 0.65rem 1.2rem !important;
+  font-size: 0.875rem !important;
+  border-radius: 0.5rem !important;
+  min-height: 2.75rem !important;
+}
+
+/* Fix PrimeReact button focus ring */
+.p-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--c-surface), 0 0 0 4px var(--brand) !important;
+}
+
+/* ---------- Compact card grid ---------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+@media (max-width: 1280px) {
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 1024px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.card-grid .card-item {
+  @apply bg-surface border border-border rounded-xl p-3 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5;
+}
+.card-grid .card-item .card-item-header {
+  @apply flex items-center justify-between mb-2;
+}
+.card-grid .card-item .card-item-name {
+  @apply text-sm font-semibold truncate;
+}
+.card-grid .card-item .card-item-sub {
+  @apply text-xs text-muted truncate;
+}
+.card-grid .card-item .card-item-footer {
+  @apply flex items-center justify-between mt-2 pt-2 border-t border-border;
+}
