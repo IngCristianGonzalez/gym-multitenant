@@ -328,7 +328,7 @@ export default function Layout() {
             </button>
             <span className="md:hidden font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>Nexus Fit</span>
           </div>
-          <div className="relative">
+          <div className="relative hidden sm:block">
             <OnlineStatus />
           </div>
         </header>
