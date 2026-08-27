@@ -10,14 +10,19 @@ import Inventario from './pages/Inventario';
 import Maquinas from './pages/Maquinas';
 import Rutinas from './pages/Rutinas';
 import Colaboradores from './pages/Colaboradores';
+import SuperAdmin from './pages/SuperAdmin';
+import Configuracion from './pages/Configuracion';
 
 export default function App() {
   const { loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-xl text-gray-500">Cargando...</p>
+      <div className="flex items-center justify-center h-screen" style={{ background: 'var(--bg)' }}>
+        <div className="text-center">
+          <i className="fa-solid fa-circle-notch fa-spin text-3xl" style={{ color: 'var(--brand)' }} />
+          <p className="text-sm mt-3" style={{ color: 'var(--text-muted)' }}>Cargando...</p>
+        </div>
       </div>
     );
   }
@@ -39,6 +44,8 @@ export default function App() {
         <Route path="/maquinas" element={<Maquinas />} />
         <Route path="/rutinas" element={<Rutinas />} />
         <Route path="/colaboradores" element={<Colaboradores />} />
+        <Route path="/super-admin" element={<SuperAdmin />} />
+        <Route path="/configuracion" element={<Configuracion />} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

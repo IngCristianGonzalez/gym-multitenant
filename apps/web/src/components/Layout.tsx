@@ -5,14 +5,16 @@ import { useSync } from '../offline/sync-provider';
 import { usePwaInstall } from '../offline/use-pwa-install';
 import { applyPrimeTheme } from '../theme/primeTheme';
 
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: 'fa-chart-line' },
-  { to: '/miembros', label: 'Miembros', icon: 'fa-users' },
-  { to: '/facturas', label: 'Facturas', icon: 'fa-file-invoice-dollar' },
-  { to: '/inventario', label: 'Inventario', icon: 'fa-boxes-stacked' },
-  { to: '/maquinas', label: 'Máquinas', icon: 'fa-dumbbell' },
-  { to: '/rutinas', label: 'Rutinas', icon: 'fa-calendar-check' },
-  { to: '/colaboradores', label: 'Colaboradores', icon: 'fa-people-group' },
+const baseNavItems = [
+  { to: '/', label: 'Dashboard', icon: 'fa-chart-line', roles: ['super_admin', 'admin', 'recepcionista'] },
+  { to: '/miembros', label: 'Miembros', icon: 'fa-users', roles: ['admin', 'recepcionista'] },
+  { to: '/facturas', label: 'Facturas', icon: 'fa-file-invoice-dollar', roles: ['admin', 'recepcionista'] },
+  { to: '/inventario', label: 'Inventario', icon: 'fa-boxes-stacked', roles: ['admin', 'recepcionista'] },
+  { to: '/maquinas', label: 'Maquinas', icon: 'fa-dumbbell', roles: ['admin', 'recepcionista'] },
+  { to: '/rutinas', label: 'Rutinas', icon: 'fa-calendar-check', roles: ['admin', 'recepcionista'] },
+  { to: '/colaboradores', label: 'Colaboradores', icon: 'fa-people-group', roles: ['admin', 'recepcionista'] },
+  { to: '/super-admin', label: 'Panel Admin', icon: 'fa-shield-halved', roles: ['super_admin'] },
+  { to: '/configuracion', label: 'Configuracion', icon: 'fa-gear', roles: ['super_admin', 'admin'] },
 ];
 
 function useTheme() {
@@ -171,30 +173,32 @@ function SidebarContent({
 
       {/* Nav */}
       <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
-          const active =
-            item.to === '/'
-              ? location.pathname === '/'
-              : location.pathname.startsWith(item.to);
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              onClick={onNavigate}
-              title={collapsed ? item.label : undefined}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 ${
-                collapsed ? 'justify-center' : ''
-              }`}
-              style={{
-                background: active ? 'rgba(61,160,110,0.15)' : 'transparent',
-                color: active ? '#3da06e' : '#999',
-                fontWeight: active ? 600 : 400,
-              }}
-            >
-              <i
-                className={`fa-solid ${item.icon} w-5 text-center text-sm`}
-                style={{ color: active ? '#3da06e' : undefined }}
-              />
+        {baseNavItems
+          .filter((item) => user?.rol && item.roles.includes(user.rol as string))
+          .map((item) => {
+            const active =
+              item.to === '/'
+                ? location.pathname === '/'
+                : location.pathname.startsWith(item.to);
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={onNavigate}
+                title={collapsed ? item.label : undefined}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 ${
+                  collapsed ? 'justify-center' : ''
+                }`}
+                style={{
+                  background: active ? 'rgba(61,160,110,0.15)' : 'transparent',
+                  color: active ? '#3da06e' : '#999',
+                  fontWeight: active ? 600 : 400,
+                }}
+              >
+                <i
+                  className={`fa-solid ${item.icon} w-5 text-center text-sm`}
+                  style={{ color: active ? '#3da06e' : undefined }}
+                />
               {!collapsed && <span className="text-sm">{item.label}</span>}
             </Link>
           );
