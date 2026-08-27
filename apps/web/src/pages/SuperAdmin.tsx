@@ -82,7 +82,7 @@ export default function SuperAdmin() {
           label="Crear gimnasio"
           icon="pi pi-plus"
           onClick={() => setModalOpen(true)}
-          className="!bg-[var(--brand)] !border-[var(--brand)] !text-white"
+          className="!bg-[var(--brand)] !border-[var(--brand)] !text-white mt-2 sm:mt-0"
         />
       </div>
 
@@ -229,15 +229,15 @@ export default function SuperAdmin() {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 mt-6 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-          <Button label="Cancelar" severity="secondary" text onClick={() => setModalOpen(false)} />
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-6 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+          <Button label="Cancelar" severity="secondary" text onClick={() => setModalOpen(false)} className="w-full sm:w-auto" />
           <Button
             label={saving ? 'Creando...' : 'Crear gimnasio'}
             icon="pi pi-check"
             loading={saving}
             onClick={crearEmpresa}
             disabled={!form.nombre || !form.nit || !form.adminNombre || !form.adminEmail || form.adminPassword.length < 6}
-            className="!bg-[var(--brand)] !border-[var(--brand)] !text-white"
+            className="!bg-[var(--brand)] !border-[var(--brand)] !text-white w-full sm:w-auto"
           />
         </div>
       </Dialog>
@@ -254,13 +254,14 @@ export default function SuperAdmin() {
             <p className="text-sm mb-4" style={{ color: 'var(--text)' }}>
               Se eliminara <strong>{deleteConfirm.nombre}</strong> y todos sus datos (usuarios, miembros, facturas). Esta accion no se puede deshacer.
             </p>
-            <div className="flex justify-end gap-2">
-              <Button label="Cancelar" severity="secondary" text onClick={() => setDeleteConfirm(null)} />
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+              <Button label="Cancelar" severity="secondary" text onClick={() => setDeleteConfirm(null)} className="w-full sm:w-auto" />
               <Button
                 label="Eliminar"
                 icon="pi pi-trash"
                 severity="danger"
                 onClick={() => eliminarEmpresa(deleteConfirm.id)}
+                className="w-full sm:w-auto"
               />
             </div>
           </div>

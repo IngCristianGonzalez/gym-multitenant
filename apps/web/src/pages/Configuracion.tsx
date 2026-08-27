@@ -211,13 +211,13 @@ export default function Configuracion() {
         </div>
 
         {isAdmin && (
-          <div className="flex justify-end">
+          <div className="flex justify-end mt-5">
             <Button
               label={saving ? 'Guardando...' : 'Guardar cambios'}
               icon="pi pi-check"
               loading={saving}
               onClick={guardarEmpresa}
-              className="!bg-[var(--brand)] !border-[var(--brand)] !text-white"
+              className="!bg-[var(--brand)] !border-[var(--brand)] !text-white w-full sm:w-auto"
             />
           </div>
         )}
@@ -236,7 +236,7 @@ export default function Configuracion() {
               icon="pi pi-plus"
               size="small"
               onClick={() => setUserModalOpen(true)}
-              className="!bg-[var(--brand)] !border-[var(--brand)] !text-white"
+              className="!bg-[var(--brand)] !border-[var(--brand)] !text-white mt-2 sm:mt-0"
             />
           </div>
 
@@ -318,15 +318,15 @@ export default function Configuracion() {
             </select>
           </div>
         </div>
-        <div className="flex justify-end gap-2 mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-          <Button label="Cancelar" severity="secondary" text onClick={() => setUserModalOpen(false)} />
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-5 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+          <Button label="Cancelar" severity="secondary" text onClick={() => setUserModalOpen(false)} className="w-full sm:w-auto" />
           <Button
             label={creatingUser ? 'Creando...' : 'Crear usuario'}
             icon="pi pi-check"
             loading={creatingUser}
             onClick={crearUsuario}
             disabled={!newUser.nombre || !newUser.email || newUser.password.length < 6}
-            className="!bg-[var(--brand)] !border-[var(--brand)] !text-white"
+            className="!bg-[var(--brand)] !border-[var(--brand)] !text-white w-full sm:w-auto"
           />
         </div>
       </Dialog>
@@ -343,9 +343,9 @@ export default function Configuracion() {
             <p className="text-sm mb-4" style={{ color: 'var(--text)' }}>
               Se eliminara a <strong>{deleteUser.nombre}</strong> ({deleteUser.email}).
             </p>
-            <div className="flex justify-end gap-2">
-              <Button label="Cancelar" severity="secondary" text onClick={() => setDeleteUser(null)} />
-              <Button label="Eliminar" icon="pi pi-trash" severity="danger" onClick={() => eliminarUsuario(deleteUser.id)} />
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+              <Button label="Cancelar" severity="secondary" text onClick={() => setDeleteUser(null)} className="w-full sm:w-auto" />
+              <Button label="Eliminar" icon="pi pi-trash" severity="danger" onClick={() => eliminarUsuario(deleteUser.id)} className="w-full sm:w-auto" />
             </div>
           </div>
         )}
